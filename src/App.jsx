@@ -2,6 +2,8 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import WelcomePage from './components/WelcomePage'
 import MenuView from './components/MenuView'
+import AdminLogin from './components/AdminLogin'
+import AdminDashboard from './components/AdminDashboard'
 import './App.css'
 
 // Page transition variants
@@ -59,6 +61,16 @@ function App() {
           <Route path="/menu" element={
             <AnimatedRoute>
               <MenuView />
+            </AnimatedRoute>
+          } />
+          <Route path="/admin" element={
+            <AnimatedRoute>
+              <AdminLogin />
+            </AnimatedRoute>
+          } />
+          <Route path="/admin/dashboard" element={
+            <AnimatedRoute>
+              <AdminDashboard />
             </AnimatedRoute>
           } />
         </Routes>

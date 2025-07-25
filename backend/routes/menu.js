@@ -1,8 +1,9 @@
 import express from 'express';
+import { authenticateAdmin } from '../utils/jwt.js';
 
 const router = express.Router();
 
-let menuItems = [
+let menuItems = [ 
     {
         id: 1,
         name: "Margherita Pizza",
@@ -29,17 +30,17 @@ let menuItems = [
     }
 ];
 
-//Get all menu items
-router.get('/', (req,res) => {
+// Get all menu items - EVERYONE
+router.get('/', (req, res) => {
     res.json({
         success: true,
         data: menuItems,
-        count: menuItems.length,
+        count: menuItems.length
     });
 });
 
-//Get a single menu item by id
-router.get('/:id', (req,res) => {
+// Get a single item by ID - EVERYONE
+router.get('/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const item = menuItems.find(item => item.id === id);
 
@@ -56,12 +57,12 @@ router.get('/:id', (req,res) => {
     });
 });
 
-//Add a new menu item
-router.post('/', (req, res) => {
+// Add a new menu item - ONLY ADMIN
+router.post('/', authenticateAdmin, (req, res) => {
     const { name, description, price, category } = req.body;
     
     // Simple validation
-    if (!name || !price || !category || !description) {
+    if (!name || !price) {
         return res.status(400).json({
             success: false,
             message: 'Name and price are required!'
@@ -73,11 +74,15 @@ router.post('/', (req, res) => {
         name,
         description: description || "",
         price: parseFloat(price),
-        category: category || "General",
-        available: true
+        category: category || "Genel",
+        available: true,
+        createdBy: req.user.username, // Admin information from the token
+        createdAt: new Date().toISOString()
     };
     
     menuItems.push(newItem);
+    
+    console.log(`Admin ${req.user.username} added new item: ${name}`);
     
     res.status(201).json({
         success: true,
@@ -86,8 +91,8 @@ router.post('/', (req, res) => {
     });
 });
 
-//Update a menu item (PUT) 
-router.put('/:id', (req, res) => {
+// Update a menu item - ONLY ADMIN
+router.put('/:id', authenticateAdmin, (req, res) => {
     const id = parseInt(req.params.id);
     const { name, description, price, category, available } = req.body;
     
@@ -96,11 +101,11 @@ router.put('/:id', (req, res) => {
     if (itemIndex === -1) {
         return res.status(404).json({
             success: false,
-            message: 'Menu item not found'
+            message: 'Menu item not found',
         });
     }
     
-    // Validation
+    // Simple validation
     if (!name || !price) {
         return res.status(400).json({
             success: false,
@@ -118,15 +123,17 @@ router.put('/:id', (req, res) => {
         available: available !== undefined ? available : true
     };
     
+    console.log(`Admin ${req.user.username} updated item: ID ${id}`);
+    
     res.json({
         success: true,
-        message: 'Menü öğesi güncellendi',
+        message: 'Menu item updated',
         data: menuItems[itemIndex]
     });
 });
 
-// Update only price (PATCH)
-router.patch('/:id/price', (req, res) => {
+// Update only price - ONLY ADMIN
+router.patch('/:id/price', authenticateAdmin, (req, res) => {
     const id = parseInt(req.params.id);
     const { price } = req.body;
     
@@ -149,6 +156,8 @@ router.patch('/:id/price', (req, res) => {
     const oldPrice = menuItems[itemIndex].price;
     menuItems[itemIndex].price = parseFloat(price);
     
+    console.log(`Admin ${req.user.username} updated price: ID ${id}`);
+    
     res.json({
         success: true,
         message: `Price updated from ${oldPrice}₺ to ${price}₺`,
@@ -156,8 +165,8 @@ router.patch('/:id/price', (req, res) => {
     });
 });
 
-// Delete a menu item
-router.delete('/:id', (req, res) => {
+// Delete a menu item - ONLY ADMIN
+router.delete('/:id', authenticateAdmin, (req, res) => {
     const id = parseInt(req.params.id);
     const itemIndex = menuItems.findIndex(item => item.id === id);
     
@@ -171,6 +180,8 @@ router.delete('/:id', (req, res) => {
     const deletedItem = menuItems[itemIndex];
     menuItems.splice(itemIndex, 1);
     
+    console.log(`Admin ${req.user.username} deleted item: ${deletedItem.name}`);
+    
     res.json({
         success: true,
         message: `"${deletedItem.name}" deleted`,
@@ -178,7 +189,7 @@ router.delete('/:id', (req, res) => {
     });
 });
 
-// Get menu items by category
+// Get menu items by category - EVERYONE
 router.get('/category/:category', (req, res) => {
     const category = req.params.category;
     const categoryItems = menuItems.filter(item => 
