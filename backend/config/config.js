@@ -8,7 +8,8 @@ const requiredEnvVars = [
   'JWT_SECRET',
   'ADMIN_USERNAME', 
   'ADMIN_EMAIL',
-  'ADMIN_PASSWORD_HASH'
+  'ADMIN_PASSWORD_HASH',
+  'MONGODB_URI' 
 ];
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -17,8 +18,7 @@ if (missingEnvVars.length > 0) {
   console.error('💥 Kritik hata: Eksik environment variables!');
   console.error('📋 Eksik değerler:', missingEnvVars.join(', '));
   console.error('📄 .env dosyasını kontrol edin ve eksik değerleri ekleyin.');
-  console.error('🔍 .env.example dosyasına bakabilirsiniz.');
-  process.exit(1); // Uygulamayı durdur
+  process.exit(1);
 }
 
 // Güvenlik kontrolü - production'da varsayılan değerler olmamalı
@@ -39,17 +39,22 @@ const config = {
     nodeEnv: process.env.NODE_ENV || 'development'
   },
   
-  // JWT ayarları - ZORUNLU
+  // JWT ayarları
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '24h'
   },
   
-  // Admin ayarları - ZORUNLU
+  // Admin ayarları
   admin: {
     username: process.env.ADMIN_USERNAME,
     email: process.env.ADMIN_EMAIL,
     passwordHash: process.env.ADMIN_PASSWORD_HASH
+  },
+  
+  // Database ayarları
+  database: {
+    mongoUri: process.env.MONGODB_URI
   },
   
   // Güvenlik ayarları

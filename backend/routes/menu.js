@@ -1,207 +1,256 @@
 import express from 'express';
 import { authenticateAdmin } from '../utils/jwt.js';
+import Product from '../models/Product.js';
 
 const router = express.Router();
 
-let menuItems = [ 
-    {
-        id: 1,
-        name: "Margherita Pizza",
-        description: "Domates sosu, mozzarella, fesleğen",
-        price: 85,
-        category: "Pizza",
-        available: true
-    },
-    {
-        id: 2,
-        name: "Caesar Salad",
-        description: "Marul, parmesan, kruton, caesar sos",
-        price: 45,
-        category: "Salata",
-        available: true
-    },
-    {
-        id: 3,
-        name: "Espresso",
-        description: "İtalyan kahvesi",
-        price: 15,
-        category: "İçecek",
-        available: true
+// Tüm ürünleri getir - HERKESE AÇIK
+router.get('/', async (req, res) => {
+    try {
+        const products = await Product.find({ available: true })
+            .sort({ popular: -1, createdAt: -1 });
+        
+        res.json({
+            success: true,
+            data: products,
+            count: products.length
+        });
+    } catch (error) {
+        console.error('Menu fetch error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Menü yüklenirken hata oluştu'
+        });
     }
-];
-
-// Get all menu items - EVERYONE
-router.get('/', (req, res) => {
-    res.json({
-        success: true,
-        data: menuItems,
-        count: menuItems.length
-    });
 });
 
-// Get a single item by ID - EVERYONE
-router.get('/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const item = menuItems.find(item => item.id === id);
-
-    if(!item){
-        return res.status(404).json({
+// ID ile tek ürün getir - HERKESE AÇIK
+router.get('/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ürün bulunamadı'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: product
+        });
+    } catch (error) {
+        console.error('Product fetch error:', error);
+        res.status(500).json({
             success: false,
-            message: "Menu item not found",
+            message: 'Ürün yüklenirken hata oluştu'
         });
     }
-
-    res.json({
-        success: true,
-        data: item,
-    });
 });
 
-// Add a new menu item - ONLY ADMIN
-router.post('/', authenticateAdmin, (req, res) => {
-    const { name, description, price, category } = req.body;
-    
-    // Simple validation
-    if (!name || !price) {
-        return res.status(400).json({
+// Kategori bazında ürünler - HERKESE AÇIK
+router.get('/category/:category', async (req, res) => {
+    try {
+        const { category } = req.params;
+        const products = await Product.find({ 
+            category: category,
+            available: true 
+        }).sort({ popular: -1, createdAt: -1 });
+        
+        res.json({
+            success: true,
+            category: category,
+            data: products,
+            count: products.length
+        });
+    } catch (error) {
+        console.error('Category fetch error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Name and price are required!'
+            message: 'Kategori yüklenirken hata oluştu'
         });
     }
-    
-    const newItem = {
-        id: Math.max(...menuItems.map(item => item.id)) + 1,
-        name,
-        description: description || "",
-        price: parseFloat(price),
-        category: category || "Genel",
-        available: true,
-        createdBy: req.user.username, // Admin information from the token
-        createdAt: new Date().toISOString()
-    };
-    
-    menuItems.push(newItem);
-    
-    console.log(`Admin ${req.user.username} added new item: ${name}`);
-    
-    res.status(201).json({
-        success: true,
-        message: 'Menu item added',
-        data: newItem
-    });
 });
 
-// Update a menu item - ONLY ADMIN
-router.put('/:id', authenticateAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-    const { name, description, price, category, available } = req.body;
-    
-    const itemIndex = menuItems.findIndex(item => item.id === id);
-    
-    if (itemIndex === -1) {
-        return res.status(404).json({
+// ADMIN ROUTES - TOKEN GEREKLİ
+
+// Yeni ürün ekle - SADECE ADMİN
+router.post('/', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, description, price, category, popular, image } = req.body;
+        
+        // Validation
+        if (!name || !description || !price) {
+            return res.status(400).json({
+                success: false,
+                message: 'İsim, açıklama ve fiyat gereklidir!'
+            });
+        }
+        
+        const newProduct = new Product({
+            name,
+            description,
+            price: parseFloat(price),
+            category: category || 'food',
+            popular: popular || false,
+            image: image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=400&fit=crop',
+            createdBy: req.user.username,
+            updatedBy: req.user.username
+        });
+        
+        const savedProduct = await newProduct.save();
+        
+        console.log(`✅ Admin ${req.user.username} yeni ürün ekledi: ${name}`);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Ürün başarıyla eklendi',
+            data: savedProduct
+        });
+    } catch (error) {
+        console.error('Product creation error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Menu item not found',
+            message: 'Ürün eklenirken hata oluştu'
         });
     }
-    
-    // Simple validation
-    if (!name || !price) {
-        return res.status(400).json({
-            success: false,
-            message: 'Name and price are required!'
-        });
-    }
-    
-    // Update the item
-    menuItems[itemIndex] = {
-        ...menuItems[itemIndex],
-        name,
-        description: description || "",
-        price: parseFloat(price),
-        category: category || "Genel",
-        available: available !== undefined ? available : true
-    };
-    
-    console.log(`Admin ${req.user.username} updated item: ID ${id}`);
-    
-    res.json({
-        success: true,
-        message: 'Menu item updated',
-        data: menuItems[itemIndex]
-    });
 });
 
-// Update only price - ONLY ADMIN
-router.patch('/:id/price', authenticateAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-    const { price } = req.body;
-    
-    if (!price || price <= 0) {
-        return res.status(400).json({
+// Ürün güncelle - SADECE ADMİN
+router.put('/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, description, price, category, popular, available, image } = req.body;
+        
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ürün bulunamadı'
+            });
+        }
+        
+        // Update fields
+        if (name) product.name = name;
+        if (description) product.description = description;
+        if (price) product.price = parseFloat(price);
+        if (category) product.category = category;
+        if (popular !== undefined) product.popular = popular;
+        if (available !== undefined) product.available = available;
+        if (image) product.image = image;
+        
+        product.updatedBy = req.user.username;
+        
+        const updatedProduct = await product.save();
+        
+        console.log(`✅ Admin ${req.user.username} ürün güncelledi: ${product.name}`);
+        
+        res.json({
+            success: true,
+            message: 'Ürün başarıyla güncellendi',
+            data: updatedProduct
+        });
+    } catch (error) {
+        console.error('Product update error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Enter a valid price!'
+            message: 'Ürün güncellenirken hata oluştu'
         });
     }
-    
-    const itemIndex = menuItems.findIndex(item => item.id === id);
-    
-    if (itemIndex === -1) {
-        return res.status(404).json({
-            success: false,
-            message: 'Menu item not found'
-        });
-    }
-    
-    const oldPrice = menuItems[itemIndex].price;
-    menuItems[itemIndex].price = parseFloat(price);
-    
-    console.log(`Admin ${req.user.username} updated price: ID ${id}`);
-    
-    res.json({
-        success: true,
-        message: `Price updated from ${oldPrice}₺ to ${price}₺`,
-        data: menuItems[itemIndex]
-    });
 });
 
-// Delete a menu item - ONLY ADMIN
-router.delete('/:id', authenticateAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-    const itemIndex = menuItems.findIndex(item => item.id === id);
-    
-    if (itemIndex === -1) {
-        return res.status(404).json({
+// Sadece fiyat güncelle - SADECE ADMİN
+router.patch('/:id/price', authenticateAdmin, async (req, res) => {
+    try {
+        const { price } = req.body;
+        
+        if (!price || price <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Geçerli bir fiyat giriniz!'
+            });
+        }
+        
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ürün bulunamadı'
+            });
+        }
+        
+        const oldPrice = product.price;
+        product.price = parseFloat(price);
+        product.updatedBy = req.user.username;
+        
+        await product.save();
+        
+        console.log(`💰 Admin ${req.user.username} fiyat güncelledi: ${product.name} (${oldPrice}₺ → ${price}₺)`);
+        
+        res.json({
+            success: true,
+            message: `Fiyat ${oldPrice}₺'den ${price}₺'ye güncellendi`,
+            data: product
+        });
+    } catch (error) {
+        console.error('Price update error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Menu item not found'
+            message: 'Fiyat güncellenirken hata oluştu'
         });
     }
-    
-    const deletedItem = menuItems[itemIndex];
-    menuItems.splice(itemIndex, 1);
-    
-    console.log(`Admin ${req.user.username} deleted item: ${deletedItem.name}`);
-    
-    res.json({
-        success: true,
-        message: `"${deletedItem.name}" deleted`,
-        data: deletedItem
-    });
 });
 
-// Get menu items by category - EVERYONE
-router.get('/category/:category', (req, res) => {
-    const category = req.params.category;
-    const categoryItems = menuItems.filter(item => 
-        item.category.toLowerCase() === category.toLowerCase()
-    );
-    
-    res.json({
-        success: true,
-        category: category,
-        data: categoryItems,
-        count: categoryItems.length
-    });
+// Ürün sil - SADECE ADMİN
+router.delete('/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Ürün bulunamadı'
+            });
+        }
+        
+        await Product.findByIdAndDelete(req.params.id);
+        
+        console.log(`🗑️  Admin ${req.user.username} ürün sildi: ${product.name}`);
+        
+        res.json({
+            success: true,
+            message: `"${product.name}" başarıyla silindi`,
+            data: product
+        });
+    } catch (error) {
+        console.error('Product deletion error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ürün silinirken hata oluştu'
+        });
+    }
+});
+
+// Admin için tüm ürünleri getir (available: false olanlar dahil)
+router.get('/admin/all', authenticateAdmin, async (req, res) => {
+    try {
+        const products = await Product.find({})
+            .sort({ createdAt: -1 });
+        
+        res.json({
+            success: true,
+            data: products,
+            count: products.length
+        });
+    } catch (error) {
+        console.error('Admin products fetch error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ürünler yüklenirken hata oluştu'
+        });
+    }
 });
 
 export default router;

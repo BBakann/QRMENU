@@ -1,152 +1,96 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Phone } from 'lucide-react'
+import { ArrowLeft, Phone, Loader } from 'lucide-react'
 import './MenuView.css'
 
 function MenuView() {
   const navigate = useNavigate()
   const [selectedCategory, setSelectedCategory] = useState('all')
-  
-  const categories = [
-    { id: 'all', name: 'Tümü', count: 15 },
-    { id: 'hot-drinks', name: 'Sıcak İçecekler', count: 4 },
-    { id: 'cold-drinks', name: 'Soğuk İçecekler', count: 3 },
-    { id: 'food', name: 'Yemekler', count: 4 },
-    { id: 'desserts', name: 'Tatlılar', count: 2 },
-    { id: 'snacks', name: 'Atıştırmalık', count: 2 }
-  ]
+  const [menuItems, setMenuItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const menuItems = [
-    {
-      id: 1,
-      name: 'Türk Kahvesi',
-      price: 28,
-      image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=500&h=400&fit=crop&crop=center',
-      description: 'Özel harmanımızla hazırlanan geleneksel Türk kahvesi',
-      category: 'hot-drinks',
-      popular: true
+  // API'den menü verilerini çek
+  useEffect(() => {
+    fetchMenuItems()
+  }, [])
+
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('http://localhost:3001/api/menu')
+      const data = await response.json()
+      
+      if (data.success) {
+        setMenuItems(data.data)
+      } else {
+        setError('Menü yüklenemedi')
+      }
+    } catch (err) {
+      setError('Bağlantı hatası')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Kategorileri dinamik olarak oluştur
+  const categories = [
+    { id: 'all', name: 'Tümü', count: menuItems.length },
+    { 
+      id: 'hot-drinks', 
+      name: 'Sıcak İçecekler', 
+      count: menuItems.filter(item => item.category === 'hot-drinks').length 
     },
-    {
-      id: 2,
-      name: 'Amerikan Kahvesi',
-      price: 32,
-      image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&h=400&fit=crop&crop=center',
-      description: 'Single origin Ethiopia çekirdekleri ile hazırlanan',
-      category: 'hot-drinks'
+    { 
+      id: 'cold-drinks', 
+      name: 'Soğuk İçecekler', 
+      count: menuItems.filter(item => item.category === 'cold-drinks').length 
     },
-    {
-      id: 3,
-      name: 'Kapuçino',
-      price: 38,
-      image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&h=400&fit=crop&crop=center',
-      description: 'Barista sanatı ile süslenmiş kremsi cappuccino',
-      category: 'hot-drinks'
+    { 
+      id: 'food', 
+      name: 'Yemekler', 
+      count: menuItems.filter(item => item.category === 'food').length 
     },
-    {
-      id: 4,
-      name: 'Espresso',
-      price: 25,
-      image: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=500&h=400&fit=crop&crop=center',
-      description: 'Geleneksel İtalyan espresso',
-      category: 'hot-drinks'
+    { 
+      id: 'desserts', 
+      name: 'Tatlılar', 
+      count: menuItems.filter(item => item.category === 'desserts').length 
     },
-    {
-      id: 5,
-      name: 'Soğuk Kahve',
-      price: 35,
-      image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&h=400&fit=crop&crop=center',
-      description: '16 saat soğuk demleme premium kahve',
-      category: 'cold-drinks',
-      popular: true
-    },
-    {
-      id: 6,
-      name: 'Buzlu Latte',
-      price: 40,
-      image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&h=400&fit=crop&crop=center',
-      description: 'Soğuk süt ve espresso buluşması',
-      category: 'cold-drinks'
-    },
-    {
-      id: 7,
-      name: 'Taze Portakal Suyu',
-      price: 25,
-      image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=500&h=400&fit=crop&crop=center',
-      description: 'Taze sıkılmış portakal suyu',
-      category: 'cold-drinks'
-    },
-    {
-      id: 8,
-      name: 'Cheeseburger',
-      price: 65,
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&h=400&fit=crop&crop=center',
-      description: 'Angus dana eti, kaşar peyniri, özel sos',
-      category: 'food',
-      popular: true
-    },
-    {
-      id: 9,
-      name: 'Margarita Pizza',
-      price: 85,
-      image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500&h=400&fit=crop&crop=center',
-      description: 'Taş fırında pişmiş, taze mozzarella ve fesleğen',
-      category: 'food'
-    },
-    {
-      id: 11,
-      name: 'Sezar Salata',
-      price: 55,
-      image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=500&h=400&fit=crop&crop=center',
-      description: 'Izgara tavuk, parmesan, kruton ve caesar sos',
-      category: 'food'
-    },
-    {
-      id: 12,
-      name: 'Patates',
-      price: 45,
-      image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&h=400&fit=crop&crop=center',
-      description: 'Altın sarısı çıtır patates kızartması',
-      category: 'food'
-    },
-    {
-      id: 13,
-      name: 'Cheesecake',
-      price: 48,
-      image: 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=500&h=400&fit=crop&crop=center',
-      description: 'New York usulü kremsi cheesecake',
-      category: 'desserts',
-      popular: true
-    },
-    {
-      id: 14,
-      name: 'Tiramisu',
-      price: 52,
-      image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&h=400&fit=crop&crop=center',
-      description: 'Geleneksel İtalyan tarifi ile hazırlanmış',
-      category: 'desserts'
-    },
-    {
-      id: 15,
-      name: 'Avokado Tost',
-      price: 52,
-      image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=500&h=400&fit=crop&crop=center',
-      description: 'Sourdough ekmeği, taze avokado, haşlanmış yumurta',
-      category: 'snacks',
-      popular: true
-    },
-    {
-      id: 16,
-      name: 'Sandviç',
-      price: 58,
-      image: 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=500&h=400&fit=crop&crop=center',
-      description: 'Üç katlı sandviç, tavuk, bacon ve sebzeler',
-      category: 'snacks'
+    { 
+      id: 'snacks', 
+      name: 'Atıştırmalık', 
+      count: menuItems.filter(item => item.category === 'snacks').length 
     }
   ]
 
+  // Filtrelenmiş ürünler
   const filteredItems = selectedCategory === 'all' 
     ? menuItems 
     : menuItems.filter(item => item.category === selectedCategory)
+
+  if (loading) {
+    return (
+      <div className="menu-page">
+        <div className="loading-container">
+          <Loader className="loading-spinner" size={40} />
+          <p>Menü yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="menu-page">
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+          <button onClick={fetchMenuItems} className="retry-btn">
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="menu-page">
@@ -162,7 +106,7 @@ function MenuView() {
           <p className="hero-subtitle">Taze lezzetler • Premium kalite • Özel deneyim</p>
           <div className="hero-stats">
             <div className="stat">
-              <span className="stat-number">15</span>
+              <span className="stat-number">{menuItems.length}</span>
               <span className="stat-label">Özel Lezzet</span>
             </div>
             <div className="stat-divider"></div>
@@ -217,7 +161,7 @@ function MenuView() {
         <div className="menu-grid">
           {filteredItems.map((item, index) => (
             <div 
-              key={item.id} 
+              key={item._id} 
               className="menu-item"
               style={{ animationDelay: `${index * 0.1}s` }}
             >

@@ -2,11 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import config from './config/config.js';
+import connectDatabase from './config/database.js';
 import adminRoutes from './routes/admin.js';
 import menuRoutes from './routes/menu.js';
 
 const app = express();
 const PORT = config.server.port;
+
+// Database bağlantısı
+connectDatabase();
 
 // CORS ayarları - .env'den al
 app.use(cors({
