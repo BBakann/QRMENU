@@ -54,7 +54,7 @@ app.use((req, res) => {
     });
 });
 
-// Vercel için export
+// Vercel için export 
 export default app;
 
 // Local development için
