@@ -8,6 +8,7 @@ import EditProductModal from './EditProductModal'
 import Toast from './Toast'
 import { useToast } from '../hooks/useToast'
 import './AdminDashboard.css'
+import AddProductModal from './AddProductModal'
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -22,6 +23,10 @@ function AdminDashboard() {
   const [editModal, setEditModal] = useState({
     isOpen: false,
     product: null
+  })
+
+  const [addModal, setAddModal] = useState({
+    isOpen: false
   })
 
   // Kategori çevirileri
@@ -112,6 +117,21 @@ function AdminDashboard() {
       item._id === updatedProduct._id ? updatedProduct : item
     ))
     showSuccess(`"${updatedProduct.name}" başarıyla güncellendi!`)
+  }
+
+  // Add modal fonksiyonları
+  const openAddModal = () => {
+    setAddModal({ isOpen: true })
+  }
+
+  const closeAddModal = () => {
+    setAddModal({ isOpen: false })
+  }
+
+  // Yeni ürün ekleme fonksiyonu
+  const handleProductAdd = (newProduct) => {
+    setMenuItems([newProduct, ...menuItems]) // Yeni ürün en üste ekle
+    showSuccess(`"${newProduct.name}" başarıyla eklendi!`)
   }
 
   // Filtrelenmiş menü öğeleri - popüler olanlar en üstte
@@ -291,7 +311,7 @@ function AdminDashboard() {
               </button>
             </div>
 
-            <button className="add-btn">
+            <button className="add-btn" onClick={openAddModal}>
               <Plus size={20} />
               <span>Yeni Ürün</span>
             </button>
@@ -403,6 +423,13 @@ function AdminDashboard() {
           </div>
         )}
       </section>
+
+      {/* Add Modal */}
+      <AddProductModal
+        isOpen={addModal.isOpen}
+        onClose={closeAddModal}
+        onAdd={handleProductAdd}
+      />
 
       {/* Edit Modal */}
       <EditProductModal
