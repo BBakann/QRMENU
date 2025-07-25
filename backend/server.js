@@ -54,12 +54,18 @@ app.use((req, res) => {
     });
 });
 
-// Server'ı başlat
-app.listen(PORT, () => {
+// Vercel için export
+export default app;
+
+// Local development için
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = config.server.port;
+  app.listen(PORT, () => {
     console.log(`🚀 Server ${PORT} portunda çalışıyor`);
     console.log(`🌍 Environment: ${config.server.nodeEnv}`);
     console.log(`🔗 URL: http://localhost:${PORT}`);
     console.log(`🎯 Frontend URL: ${config.cors.frontendUrl}`);
     console.log('📋 Routes loaded: /api/admin, /api/menu');
     console.log('✅ Backend hazır!');
-});
+  });
+}

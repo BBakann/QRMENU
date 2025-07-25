@@ -9,6 +9,7 @@ import Toast from './Toast'
 import { useToast } from '../hooks/useToast'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
+import { API_BASE_URL } from '../config/api'
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -53,7 +54,7 @@ function AdminDashboard() {
     try {
       setIsLoading(true)
       const token = localStorage.getItem('adminToken')
-      const response = await fetch('http://localhost:3001/api/menu/admin/all', {
+      const response = await fetch(`${API_BASE_URL}/menu/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -79,7 +80,7 @@ function AdminDashboard() {
     
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`http://localhost:3001/api/menu/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
