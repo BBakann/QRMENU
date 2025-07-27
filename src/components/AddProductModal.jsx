@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Save, Loader, Star, Eye, Package } from 'lucide-react'
+import { API_BASE_URL } from '../config/api'
 import './AddProductModal.css'
 
 function AddProductModal({ isOpen, onClose, onAdd }) {
@@ -98,7 +99,7 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
 
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch('http://localhost:3001/api/menu', {
+      const response = await fetch(`${API_BASE_URL}/menu`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

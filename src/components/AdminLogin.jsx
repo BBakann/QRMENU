@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Lock, Eye, EyeOff } from 'lucide-react'
+import { API_BASE_URL } from '../config/api'
 import './AdminLogin.css'
 
 function AdminLogin() {
@@ -27,7 +28,7 @@ function AdminLogin() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:3001/api/admin/login', {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

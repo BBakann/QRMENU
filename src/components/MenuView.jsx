@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Phone, Loader } from 'lucide-react'
+import { API_BASE_URL } from '../config/api'
 import './MenuView.css'
 
 function MenuView() {
@@ -18,7 +19,7 @@ function MenuView() {
   const fetchMenuItems = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:3001/api/menu')
+      const response = await fetch(`${API_BASE_URL}/menu`)
       const data = await response.json()
       
       if (data.success) {

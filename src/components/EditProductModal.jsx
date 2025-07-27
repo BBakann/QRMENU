@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye } from 'lucide-react'
+import { API_BASE_URL } from '../config/api'
 import './EditProductModal.css'
 
 function EditProductModal({ product, isOpen, onClose, onUpdate }) {
@@ -60,7 +61,7 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
 
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`http://localhost:3001/api/menu/${product._id}`, {
+      const response = await fetch(`${API_BASE_URL}/menu/${product._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

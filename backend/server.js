@@ -25,12 +25,24 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 app.use('/api/menu', menuRoutes);
 
-// Test Route
+// Test Route - Debug için
 app.get('/', (req, res) => {
     res.json({ 
         message: "QRMenu Backend API çalışıyor! 🚀",
         environment: config.server.nodeEnv,
-        version: "1.0.0"
+        version: "1.0.0",
+        timestamp: new Date().toISOString(),
+        cors: config.cors.allowedOrigins
+    });
+});
+
+// Backend health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV,
+        uptime: process.uptime()
     });
 });
 
