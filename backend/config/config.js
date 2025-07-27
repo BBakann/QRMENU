@@ -64,7 +64,16 @@ const config = {
   
   // CORS ayarları
   cors: {
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+    allowedOrigins: [
+      // Local development
+      'http://localhost:5173',
+      'http://localhost:3000',
+      // Production - Vercel otomatik domain
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      // Custom domain (eğer varsa)
+      process.env.FRONTEND_URL
+    ].filter(Boolean)
   }
 };
 

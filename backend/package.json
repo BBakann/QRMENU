@@ -9,14 +9,9 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "postinstall": "cd backend && npm install",
+    "dev": "nodemon server.js",
     "hash-password": "node scripts/hashPassword.js",
-    "generate-jwt-secret": "node scripts/generateJwtSecret.js",
-    "seed-products": "node scripts/seedProducts.js"
+    "generate-jwt-secret": "node scripts/generateJwtSecret.js"
   },
   "keywords": [
     "qrmenu",

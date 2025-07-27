@@ -12,9 +12,9 @@ const PORT = config.server.port;
 // Database bağlantısı
 connectDatabase();
 
-// CORS ayarları - .env'den al
+// CORS ayarları - production için optimize edildi
 app.use(cors({
-    origin: [config.cors.frontendUrl, 'http://localhost:3000'],
+    origin: config.cors.allowedOrigins,
     credentials: true
 }));
 
