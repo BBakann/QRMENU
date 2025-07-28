@@ -8,13 +8,44 @@ function MenuView() {
   const navigate = useNavigate()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [menuItems, setMenuItems] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // API'den menü verilerini çek
+  // API'den menü ve kategori verilerini çek
   useEffect(() => {
-    fetchMenuItems()
+    fetchData()
   }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      
+      // Paralel olarak menü ve kategorileri çek
+      const [menuResponse, categoriesResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/menu`),
+        fetch(`${API_BASE_URL}/categories`)
+      ])
+      
+      const menuData = await menuResponse.json()
+      const categoriesData = await categoriesResponse.json()
+      
+      if (menuData.success) {
+        setMenuItems(menuData.data)
+      } else {
+        setError('Menü yüklenemedi')
+      }
+      
+      if (categoriesData.success) {
+        setCategories(categoriesData.data)
+      }
+      
+    } catch (err) {
+      setError('Bağlantı hatası')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchMenuItems = async () => {
     try {
@@ -34,34 +65,14 @@ function MenuView() {
     }
   }
 
-  // Kategorileri dinamik olarak oluştur
-  const categories = [
+  // Kategorileri dinamik olarak oluştur (API'dan gelen kategoriler + "Tümü")
+  const allCategories = [
     { id: 'all', name: 'Tümü', count: menuItems.length },
-    { 
-      id: 'hot-drinks', 
-      name: 'Sıcak İçecekler', 
-      count: menuItems.filter(item => item.category === 'hot-drinks').length 
-    },
-    { 
-      id: 'cold-drinks', 
-      name: 'Soğuk İçecekler', 
-      count: menuItems.filter(item => item.category === 'cold-drinks').length 
-    },
-    { 
-      id: 'food', 
-      name: 'Yemekler', 
-      count: menuItems.filter(item => item.category === 'food').length 
-    },
-    { 
-      id: 'desserts', 
-      name: 'Tatlılar', 
-      count: menuItems.filter(item => item.category === 'desserts').length 
-    },
-    { 
-      id: 'snacks', 
-      name: 'Atıştırmalık', 
-      count: menuItems.filter(item => item.category === 'snacks').length 
-    }
+    ...categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      count: menuItems.filter(item => item.category === cat.id).length
+    }))
   ]
 
   // Filtrelenmiş ürünler
@@ -85,7 +96,7 @@ function MenuView() {
       <div className="menu-page">
         <div className="error-container">
           <p className="error-message">{error}</p>
-          <button onClick={fetchMenuItems} className="retry-btn">
+          <button onClick={fetchData} className="retry-btn">
             Tekrar Dene
           </button>
         </div>
@@ -103,12 +114,12 @@ function MenuView() {
         </button>
         <div className="hero-content">
           <div className="hero-badge">QR MENU CAFE</div>
-          <h1 className="hero-title">QR Menu Cafe</h1>
-          <p className="hero-subtitle">Taze lezzetler • Premium kalite • Özel deneyim</p>
+          <h1 className="hero-title">Menümüz</h1>
+          <p className="hero-subtitle">Lezzetli seçeneklerimizi keşfedin</p>
           <div className="hero-stats">
             <div className="stat">
               <span className="stat-number">{menuItems.length}</span>
-              <span className="stat-label">Özel Lezzet</span>
+              <span className="stat-label">Ürün</span>
             </div>
             <div className="stat-divider"></div>
             <div className="stat">
@@ -123,11 +134,10 @@ function MenuView() {
       <div className="category-section">
         <div className="category-container">
           <div className="category-header">
-            <h2 className="category-heading">Lezzet Kategorileri</h2>
-            <p className="category-subheading">Size özel hazırlanmış koleksiyonlarımız</p>
+            <h2 className="category-heading">Kategoriler</h2>
           </div>
           <div className="category-filters">
-            {categories.map((category) => (
+            {allCategories.map((category) => (
               <button
                 key={category.id}
                 className={`category-filter ${selectedCategory === category.id ? 'active' : ''}`}
@@ -149,13 +159,12 @@ function MenuView() {
         <div className="section-info">
           <div className="section-header">
             <h3 className="section-title">
-              {selectedCategory === 'all' ? 'Tüm Koleksiyon' : categories.find(c => c.id === selectedCategory)?.name}
+              {selectedCategory === 'all' ? 'Tüm Menü' : allCategories.find(c => c.id === selectedCategory)?.name}
             </h3>
-            <p className="section-subtitle">Her biri özenle seçilmiş</p>
           </div>
           <div className="item-count">
             <span className="count-number">{filteredItems.length}</span>
-            <span className="count-label">ürün</span>
+            <span className="count-label">ürün bulundu</span>
           </div>
         </div>
         

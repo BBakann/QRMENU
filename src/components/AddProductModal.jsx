@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye, Package } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
 import './AddProductModal.css'
@@ -13,8 +13,34 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
     available: true,
     image: ''
   })
+  const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Kategorileri yükle
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories()
+    }
+  }, [isOpen])
+
+  // Kategorileri API'dan çek
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setCategories(data.data)
+        // Eğer kategori boşsa ve kategoriler varsa ilkini seç
+        if (data.data.length > 0 && !formData.category) {
+          setFormData(prev => ({ ...prev, category: data.data[0].id }))
+        }
+      }
+    } catch (err) {
+      console.error('Kategoriler yüklenirken hata:', err)
+    }
+  }
 
   // Form input değişikliklerini handle et
   const handleChange = (e) => {
@@ -236,11 +262,9 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
                 onChange={handleChange}
                 className="form-select"
               >
-                <option value="hot-drinks">☕ Sıcak İçecekler</option>
-                <option value="cold-drinks">🥤 Soğuk İçecekler</option>
-                <option value="food">🍽️ Yemekler</option>
-                <option value="desserts">🧁 Tatlılar</option>
-                <option value="snacks">🥪 Atıştırmalık</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
               </select>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   LogOut, Plus, Edit3, Trash2, DollarSign, Package, TrendingUp, 
-  Search, Filter, Eye, EyeOff, Star, Clock, User, BarChart3
+  Search, Filter, Eye, EyeOff, Star, Clock, User, Tag
 } from 'lucide-react'
 import EditProductModal from './EditProductModal'
 import Toast from './Toast'
@@ -14,11 +14,12 @@ import { API_BASE_URL } from '../config/api'
 function AdminDashboard() {
   const navigate = useNavigate()
   const [menuItems, setMenuItems] = useState([])
+  const [categories, setCategories] = useState([]) // Kategoriler state'i
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [viewMode, setViewMode] = useState('grid') // grid or table
+  const [showCategoryForm, setShowCategoryForm] = useState(false) // Kategori formu göster/gizle
   const { toasts, removeToast, showSuccess, showError, showDelete } = useToast()
 
   const [editModal, setEditModal] = useState({
@@ -30,14 +31,13 @@ function AdminDashboard() {
     isOpen: false
   })
 
-  // Kategori çevirileri
-  const categoryTranslations = {
-    'hot-drinks': 'Sıcak İçecekler',
-    'cold-drinks': 'Soğuk İçecekler', 
-    'food': 'Yemekler',
-    'desserts': 'Tatlılar',
-    'snacks': 'Atıştırmalık'
-  }
+  // Kategori formu state'i
+  const [categoryForm, setCategoryForm] = useState({
+    id: '',
+    name: '',
+    description: '',
+    sortOrder: 0
+  })
 
   // Sayfa yüklendiğinde çalışır
   useEffect(() => {
@@ -47,7 +47,46 @@ function AdminDashboard() {
       return
     }
     fetchMenuItems()
+    fetchCategories() // Kategorileri de yükle
+    
+    // Mevcut kategorileri otomatik ekle (eğer yoksa)
+    initializeDefaultCategories()
   }, [navigate])
+
+  // Varsayılan kategorileri ekle
+  const initializeDefaultCategories = async () => {
+    const defaultCategories = [
+      { id: 'hot-drinks', name: 'Sıcak İçecekler', description: 'Kahve, çay ve sıcak içecekler', sortOrder: 1 },
+      { id: 'cold-drinks', name: 'Soğuk İçecekler', description: 'Meyve suları, gazlı içecekler', sortOrder: 2 },
+      { id: 'food', name: 'Yemekler', description: 'Ana yemekler ve atıştırmalıklar', sortOrder: 3 },
+      { id: 'desserts', name: 'Tatlılar', description: 'Çeşitli tatlılar', sortOrder: 4 },
+      { id: 'snacks', name: 'Atıştırmalık', description: 'Küçük lezzetler', sortOrder: 5 }
+    ];
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      
+      for (const category of defaultCategories) {
+        // Kategori var mı kontrol et
+        const existing = categories.find(cat => cat.id === category.id);
+        if (!existing) {
+          await fetch(`${API_BASE_URL}/categories`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(category)
+          });
+        }
+      }
+      
+      // Kategorileri yenile
+      fetchCategories();
+    } catch (error) {
+      console.log('Varsayılan kategoriler eklenirken hata:', error);
+    }
+  }
 
   // Backend'den menü verilerini çek
   const fetchMenuItems = async () => {
@@ -70,6 +109,101 @@ function AdminDashboard() {
       setError('Bağlantı hatası')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Backend'den kategorileri çek
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`${API_BASE_URL}/categories/admin/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        setCategories(data.data)
+        console.log('✅ Kategoriler yüklendi:', data.data)
+      } else {
+        console.error('Kategoriler yüklenemedi:', data.message)
+      }
+    } catch (err) {
+      console.error('❌ Kategoriler yüklenirken hata:', err)
+    }
+  }
+
+  // Kategori formu submit
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!categoryForm.id || !categoryForm.name) {
+      showError('ID ve isim gereklidir!')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`${API_BASE_URL}/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(categoryForm)
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        showSuccess('Kategori başarıyla eklendi!')
+        fetchCategories() // Kategorileri yenile
+        // Formu temizle
+        setCategoryForm({
+          id: '',
+          name: '',
+          description: '',
+          sortOrder: 0
+        })
+        setShowCategoryForm(false)
+      } else {
+        showError(data.message)
+      }
+    } catch (err) {
+      showError('Kategori eklenirken hata oluştu')
+    }
+  }
+
+  // Kategori silme fonksiyonu
+  const handleCategoryDelete = async (categoryId, categoryName) => {
+    // Onay dialog'u
+    const confirmed = window.confirm(
+      `"${categoryName}" kategorisini silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem geri alınamaz ve kategori içindeki TÜM ÜRÜNLER de silinecektir.\n\nDevam etmek istiyor musunuz?`
+    )
+    
+    if (!confirmed) return
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        showDelete(`${categoryName} kategorisi ${data.data.deletedProducts > 0 ? `ve ${data.data.deletedProducts} ürün` : ''} silindi`)
+        fetchCategories() // Kategorileri yenile
+        fetchMenuItems() // Ürünleri de yenile (silinmiş olabilir)
+      } else {
+        showError(data.message)
+      }
+    } catch (err) {
+      showError('Kategori silinirken hata oluştu')
     }
   }
 
@@ -151,8 +285,8 @@ function AdminDashboard() {
       return a.name.localeCompare(b.name, 'tr-TR')
     })
 
-  // Kategorileri al
-  const categories = ['all', ...new Set(menuItems.map(item => item.category))]
+  // Kategorileri al (ürünlerden)
+  const productCategories = ['all', ...new Set(menuItems.map(item => item.category))]
 
   // İstatistikleri hesapla
   const calculateStats = () => {
@@ -264,6 +398,126 @@ function AdminDashboard() {
         </div>
       </section>
 
+      {/* Kategori Yönetimi */}
+      <section className="category-management">
+        <div className="category-header">
+          <div className="category-title">
+            <Tag size={24} />
+            <h2>Kategori Yönetimi</h2>
+            <span className="category-count">{categories.length} kategori</span>
+          </div>
+          <button 
+            className="add-category-btn"
+            onClick={() => setShowCategoryForm(!showCategoryForm)}
+          >
+            <Plus size={18} />
+            <span>Kategori Ekle</span>
+          </button>
+        </div>
+
+        {/* Kategori Ekleme Formu */}
+        {showCategoryForm && (
+          <div className="category-form-container">
+            <form onSubmit={handleCategorySubmit} className="category-form">
+              <div className="form-header">
+                <h3>Yeni Kategori Ekle</h3>
+              </div>
+              
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Kategori ID *</label>
+                  <input
+                    type="text"
+                    value={categoryForm.id}
+                    onChange={(e) => setCategoryForm({...categoryForm, id: e.target.value})}
+                    placeholder="Örn: beverages"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Kategori Adı *</label>
+                  <input
+                    type="text"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
+                    placeholder="Örn: İçecekler"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Sıralama</label>
+                  <input
+                    type="number"
+                    value={categoryForm.sortOrder}
+                    onChange={(e) => setCategoryForm({...categoryForm, sortOrder: parseInt(e.target.value)})}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Açıklama</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
+                  placeholder="Kategori açıklaması..."
+                  rows="3"
+                />
+              </div>
+              
+              <div className="form-actions">
+                <button type="button" onClick={() => setShowCategoryForm(false)} className="btn-cancel">
+                  İptal
+                </button>
+                <button type="submit" className="btn-submit">
+                  <Plus size={16} />
+                  Kategori Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Kategoriler Listesi */}
+        <div className="categories-list">
+          {categories.length > 0 ? (
+            <div className="categories-grid">
+              {categories.map((category) => (
+                <div key={category.id} className="category-card">
+                  <div className="category-info">
+                    <h4>{category.name}</h4>
+                    <span className="category-id">#{category.id}</span>
+                    {category.description && (
+                      <p className="category-description">{category.description}</p>
+                    )}
+                  </div>
+                  <div className="category-status">
+                    <span className={`status ${category.active ? 'active' : 'inactive'}`}>
+                      {category.active ? 'Aktif' : 'Pasif'}
+                    </span>
+                  </div>
+                  <div className="category-actions">
+                    <button 
+                      className="action-btn action-btn--delete"
+                      onClick={() => handleCategoryDelete(category.id, category.name)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-categories">
+              <Tag size={48} />
+              <p>Henüz kategori bulunmuyor. Mevcut kategoriler otomatik eklenecek!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Premium Controls */}
       <section className="dashboard-controls">
         <div className="controls-container">
@@ -287,9 +541,9 @@ function AdminDashboard() {
                 className="filter-select"
               >
                 <option value="all">Tüm Kategoriler</option>
-                {Object.keys(categoryTranslations).map(cat => (
-                  <option key={cat} value={cat}>
-                    {categoryTranslations[cat]}
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -297,21 +551,6 @@ function AdminDashboard() {
           </div>
 
           <div className="controls-right">
-            <div className="view-toggle">
-              <button 
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <BarChart3 size={18} />
-              </button>
-              <button 
-                className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
-                onClick={() => setViewMode('table')}
-              >
-                <Package size={18} />
-              </button>
-            </div>
-
             <button className="add-btn" onClick={openAddModal}>
               <Plus size={20} />
               <span>Yeni Ürün</span>
@@ -335,7 +574,7 @@ function AdminDashboard() {
             </button>
           </div>
         ) : (
-          <div className={`products-container ${viewMode === 'grid' ? 'grid-view' : 'table-view'}`}>
+          <div className={`products-container`}>
             {filteredItems.length > 0 ? (
               <>
                 <div className="content-header">
@@ -343,76 +582,69 @@ function AdminDashboard() {
                   <p className="content-subtitle">{filteredItems.length} ürün gösteriliyor</p>
                 </div>
 
-                {viewMode === 'grid' ? (
-                  <div className="products-grid">
-                    {filteredItems.map((item, index) => (
-                      <div 
-                        key={item._id} 
-                        className="product-card"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                      >
-                        <div className="product-image">
-                          <img src={item.image} alt={item.name} />
-                          <div className="product-badges">
-                            {item.popular && (
-                              <span className="badge badge--popular">
-                                <Star size={12} />
-                                Popüler
-                              </span>
-                            )}
-                            {!item.available && (
-                              <span className="badge badge--unavailable">
-                                <EyeOff size={12} />
-                                Tükendi
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="product-info">
-                          <div className="product-header">
-                            <h4 className="product-name">{item.name}</h4>
-                            <span className="product-price">{item.price}₺</span>
-                          </div>
-                          
-                          <p className="product-description">{item.description}</p>
-                          
-                          <div className="product-meta">
-                            <span className="product-category">
-                              {categoryTranslations[item.category]}
+                <div className="products-grid">
+                  {filteredItems.map((item, index) => (
+                    <div 
+                      key={item._id} 
+                      className="product-card"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="product-image">
+                        <img src={item.image} alt={item.name} />
+                        <div className="product-badges">
+                          {item.popular && (
+                            <span className="badge badge--popular">
+                              <Star size={12} />
+                              Popüler
                             </span>
-                            <span className="product-date">
-                              <Clock size={12} />
-                              {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                          )}
+                          {!item.available && (
+                            <span className="badge badge--unavailable">
+                              <EyeOff size={12} />
+                              Tükendi
                             </span>
-                          </div>
-
-                          <div className="product-actions">
-                            <button 
-                              className="action-btn action-btn--edit"
-                              onClick={() => openEditModal(item)}
-                            >
-                              <Edit3 size={16} />
-                              Düzenle
-                            </button>
-                            <button 
-                              className="action-btn action-btn--delete"
-                              onClick={() => deleteMenuItem(item._id)}
-                            >
-                              <Trash2 size={16} />
-                              Sil
-                            </button>
-                          </div>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  // Table view için existing table code
-                  <div className="products-table">
-                    {/* Existing table implementation */}
-                  </div>
-                )}
+
+                      <div className="product-info">
+                        <div className="product-header">
+                          <h4 className="product-name">{item.name}</h4>
+                          <span className="product-price">{item.price}₺</span>
+                        </div>
+                        
+                        <p className="product-description">{item.description}</p>
+                        
+                        <div className="product-meta">
+                          <span className="product-category">
+                            {categories.find(cat => cat.id === item.category)?.name || item.category}
+                          </span>
+                          <span className="product-date">
+                            <Clock size={12} />
+                            {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                          </span>
+                        </div>
+
+                        <div className="product-actions">
+                          <button 
+                            className="action-btn action-btn--edit"
+                            onClick={() => openEditModal(item)}
+                          >
+                            <Edit3 size={16} />
+                            Düzenle
+                          </button>
+                          <button 
+                            className="action-btn action-btn--delete"
+                            onClick={() => deleteMenuItem(item._id)}
+                          >
+                            <Trash2 size={16} />
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </>
             ) : (
               <div className="no-results">

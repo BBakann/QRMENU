@@ -5,6 +5,7 @@ import config from './config/config.js';
 import connectDatabase from './config/database.js';
 import adminRoutes from './routes/admin.js';
 import menuRoutes from './routes/menu.js';
+import categoryRoutes from './routes/categories.js';
 
 const app = express();
 const PORT = config.server.port;
@@ -12,7 +13,7 @@ const PORT = config.server.port;
 // Database bağlantısı
 connectDatabase();
 
-// CORS ayarları - production için optimize edildi
+// CORS ayarları
 app.use(cors({
     origin: config.cors.allowedOrigins,
     credentials: true
@@ -24,6 +25,7 @@ app.use(express.json());
 // Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/menu', menuRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Test Route - Debug için
 app.get('/', (req, res) => {

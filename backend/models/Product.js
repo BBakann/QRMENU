@@ -21,8 +21,9 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Kategori gereklidir'],
-    enum: ['hot-drinks', 'cold-drinks', 'food', 'desserts', 'snacks'],
-    default: 'food'
+    trim: true,
+    lowercase: true,
+    maxlength: [30, 'Kategori 30 karakterden fazla olamaz']
   },
   available: {
     type: Boolean,
