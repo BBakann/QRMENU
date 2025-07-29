@@ -35,8 +35,7 @@ function AdminDashboard() {
   const [categoryForm, setCategoryForm] = useState({
     id: '',
     name: '',
-    description: '',
-    sortOrder: 0
+    description: ''
   })
 
   // Sayfa yüklendiğinde çalışır
@@ -56,11 +55,11 @@ function AdminDashboard() {
   // Varsayılan kategorileri ekle
   const initializeDefaultCategories = async () => {
     const defaultCategories = [
-      { id: 'hot-drinks', name: 'Sıcak İçecekler', description: 'Kahve, çay ve sıcak içecekler', sortOrder: 1 },
-      { id: 'cold-drinks', name: 'Soğuk İçecekler', description: 'Meyve suları, gazlı içecekler', sortOrder: 2 },
-      { id: 'food', name: 'Yemekler', description: 'Ana yemekler ve atıştırmalıklar', sortOrder: 3 },
-      { id: 'desserts', name: 'Tatlılar', description: 'Çeşitli tatlılar', sortOrder: 4 },
-      { id: 'snacks', name: 'Atıştırmalık', description: 'Küçük lezzetler', sortOrder: 5 }
+      { id: 'hot-drinks', name: 'Sıcak İçecekler', description: 'Kahve, çay ve sıcak içecekler' },
+      { id: 'cold-drinks', name: 'Soğuk İçecekler', description: 'Meyve suları, gazlı içecekler' },
+      { id: 'food', name: 'Yemekler', description: 'Ana yemekler ve atıştırmalıklar' },
+      { id: 'desserts', name: 'Tatlılar', description: 'Çeşitli tatlılar' },
+      { id: 'snacks', name: 'Atıştırmalık', description: 'Küçük lezzetler' }
     ];
 
     try {
@@ -163,8 +162,7 @@ function AdminDashboard() {
         setCategoryForm({
           id: '',
           name: '',
-          description: '',
-          sortOrder: 0
+          description: ''
         })
         setShowCategoryForm(false)
       } else {
@@ -285,9 +283,6 @@ function AdminDashboard() {
       return a.name.localeCompare(b.name, 'tr-TR')
     })
 
-  // Kategorileri al (ürünlerden)
-  const productCategories = ['all', ...new Set(menuItems.map(item => item.category))]
-
   // İstatistikleri hesapla
   const calculateStats = () => {
     const totalItems = menuItems.length
@@ -320,17 +315,17 @@ function AdminDashboard() {
           <div className="header-actions">
             <div className="header-stats-mini">
               <div className="mini-stat">
-                <Package size={16} />
+                <Package size={14} />
                 <span>{stats.totalItems}</span>
               </div>
               <div className="mini-stat">
-                <DollarSign size={16} />
+                <DollarSign size={14} />
                 <span>{stats.totalValue.toFixed(0)}₺</span>
               </div>
             </div>
             
             <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={18} />
+              <LogOut size={16} />
               <span>Çıkış</span>
             </button>
           </div>
@@ -343,7 +338,7 @@ function AdminDashboard() {
           <div className="stat-card stat-card--primary">
             <div className="stat-background"></div>
             <div className="stat-icon">
-              <Package size={28} />
+              <Package size={24} />
             </div>
             <div className="stat-content">
               <h3 className="stat-number">{stats.totalItems}</h3>
@@ -357,7 +352,7 @@ function AdminDashboard() {
           <div className="stat-card stat-card--success">
             <div className="stat-background"></div>
             <div className="stat-icon">
-              <DollarSign size={28} />
+              <DollarSign size={24} />
             </div>
             <div className="stat-content">
               <h3 className="stat-number">{stats.totalValue.toFixed(0)}₺</h3>
@@ -371,7 +366,7 @@ function AdminDashboard() {
           <div className="stat-card stat-card--info">
             <div className="stat-background"></div>
             <div className="stat-icon">
-              <TrendingUp size={28} />
+              <TrendingUp size={24} />
             </div>
             <div className="stat-content">
               <h3 className="stat-number">{stats.avgPrice.toFixed(0)}₺</h3>
@@ -385,13 +380,13 @@ function AdminDashboard() {
           <div className="stat-card stat-card--warning">
             <div className="stat-background"></div>
             <div className="stat-icon">
-              <Star size={28} />
+              <Star size={24} />
             </div>
             <div className="stat-content">
               <h3 className="stat-number">{stats.popularItems}</h3>
               <p className="stat-label">Popüler Ürün</p>
               <div className="stat-progress">
-                <div className="progress-bar" style={{width: `${(stats.popularItems / stats.totalItems) * 100}%`}}></div>
+                <div className="progress-bar" style={{width: `${(stats.popularItems / (stats.totalItems || 1)) * 100}%`}}></div>
               </div>
             </div>
           </div>
@@ -402,7 +397,7 @@ function AdminDashboard() {
       <section className="category-management">
         <div className="category-header">
           <div className="category-title">
-            <Tag size={24} />
+            <Tag size={20} />
             <h2>Kategori Yönetimi</h2>
             <span className="category-count">{categories.length} kategori</span>
           </div>
@@ -410,7 +405,7 @@ function AdminDashboard() {
             className="add-category-btn"
             onClick={() => setShowCategoryForm(!showCategoryForm)}
           >
-            <Plus size={18} />
+            <Plus size={16} />
             <span>Kategori Ekle</span>
           </button>
         </div>
@@ -445,16 +440,6 @@ function AdminDashboard() {
                     required
                   />
                 </div>
-                
-                <div className="form-group">
-                  <label>Sıralama</label>
-                  <input
-                    type="number"
-                    value={categoryForm.sortOrder}
-                    onChange={(e) => setCategoryForm({...categoryForm, sortOrder: parseInt(e.target.value)})}
-                    placeholder="0"
-                  />
-                </div>
               </div>
               
               <div className="form-group">
@@ -472,7 +457,7 @@ function AdminDashboard() {
                   İptal
                 </button>
                 <button type="submit" className="btn-submit">
-                  <Plus size={16} />
+                  <Plus size={14} />
                   Kategori Ekle
                 </button>
               </div>
@@ -494,8 +479,8 @@ function AdminDashboard() {
                     )}
                   </div>
                   <div className="category-status">
-                    <span className={`status ${category.active ? 'active' : 'inactive'}`}>
-                      {category.active ? 'Aktif' : 'Pasif'}
+                    <span className={`status ${category.active !== false ? 'active' : 'inactive'}`}>
+                      {category.active !== false ? 'Aktif' : 'Pasif'}
                     </span>
                   </div>
                   <div className="category-actions">
@@ -503,7 +488,7 @@ function AdminDashboard() {
                       className="action-btn action-btn--delete"
                       onClick={() => handleCategoryDelete(category.id, category.name)}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -511,7 +496,7 @@ function AdminDashboard() {
             </div>
           ) : (
             <div className="no-categories">
-              <Tag size={48} />
+              <Tag size={40} />
               <p>Henüz kategori bulunmuyor. Mevcut kategoriler otomatik eklenecek!</p>
             </div>
           )}
@@ -523,7 +508,7 @@ function AdminDashboard() {
         <div className="controls-container">
           <div className="controls-left">
             <div className="search-container">
-              <Search size={20} className="search-icon" />
+              <Search size={18} className="search-icon" />
               <input
                 type="text"
                 placeholder="Ürün ara..."
@@ -534,25 +519,29 @@ function AdminDashboard() {
             </div>
 
             <div className="filter-container">
-              <Filter size={20} className="filter-icon" />
+              <Filter size={18} className="filter-icon" />
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="filter-select"
               >
                 <option value="all">Tüm Kategoriler</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
+                {categories
+                  .filter(cat => cat.active !== false)
+                  .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR'))
+                  .map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                }
               </select>
             </div>
           </div>
 
           <div className="controls-right">
             <button className="add-btn" onClick={openAddModal}>
-              <Plus size={20} />
+              <Plus size={18} />
               <span>Yeni Ürün</span>
             </button>
           </div>
@@ -587,20 +576,20 @@ function AdminDashboard() {
                       <div 
                         key={item._id} 
                         className="product-card"
-                        style={{ animationDelay: `${index * 0.1}s` }}
+                        style={{ animationDelay: `${index * 0.05}s` }}
                       >
                         <div className="product-image">
                           <img src={item.image} alt={item.name} />
                           <div className="product-badges">
                             {item.popular && (
                               <span className="badge badge--popular">
-                                <Star size={12} />
+                                <Star size={10} />
                                 Popüler
                               </span>
                             )}
                             {!item.available && (
                               <span className="badge badge--unavailable">
-                                <EyeOff size={12} />
+                                <EyeOff size={10} />
                                 Tükendi
                               </span>
                             )}
@@ -620,7 +609,7 @@ function AdminDashboard() {
                             {categories.find(cat => cat.id === item.category)?.name || item.category}
                             </span>
                             <span className="product-date">
-                              <Clock size={12} />
+                              <Clock size={10} />
                               {new Date(item.createdAt).toLocaleDateString('tr-TR')}
                             </span>
                           </div>
@@ -630,14 +619,14 @@ function AdminDashboard() {
                               className="action-btn action-btn--edit"
                               onClick={() => openEditModal(item)}
                             >
-                              <Edit3 size={16} />
+                              <Edit3 size={14} />
                               Düzenle
                             </button>
                             <button 
                               className="action-btn action-btn--delete"
                               onClick={() => deleteMenuItem(item._id)}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
                               Sil
                             </button>
                           </div>
@@ -648,7 +637,7 @@ function AdminDashboard() {
               </>
             ) : (
               <div className="no-results">
-                <Package size={64} className="no-results-icon" />
+                <Package size={48} className="no-results-icon" />
                 <h3>Ürün bulunamadı</h3>
                 <p>Arama kriterlerinizi değiştirin veya yeni ürün ekleyin</p>
               </div>

@@ -14,11 +14,19 @@ const PORT = config.server.port;
 // Database bağlantısı
 connectDatabase();
 
-// CORS ayarları
-app.use(cors({
-    origin: config.cors.allowedOrigins,
-    credentials: true
-}));
+// CORS ayarları - Development için basitleştirildi
+if (process.env.NODE_ENV === 'production') {
+    app.use(cors({
+        origin: config.cors.allowedOrigins,
+        credentials: true
+    }));
+} else {
+    // Development için tüm localhost'lara izin ver
+    app.use(cors({
+        origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080'],
+        credentials: true
+    }));
+}
 
 app.use(morgan('combined'));
 app.use(express.json());

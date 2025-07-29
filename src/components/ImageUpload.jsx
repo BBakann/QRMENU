@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Camera, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Camera, Upload, X, Image as ImageIcon, FolderOpen } from 'lucide-react'
 import { API_BASE_URL } from '../config/api.js'
 import './ImageUpload.css'
 
@@ -7,7 +7,8 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState(currentImage)
   const [dragActive, setDragActive] = useState(false)
-  const fileInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
+  const galleryInputRef = useRef(null)
 
   const handleFileChange = async (file) => {
     if (!file) return
@@ -61,7 +62,12 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
     }
   }
 
-  const handleInputChange = (e) => {
+  const handleCameraChange = (e) => {
+    const file = e.target.files[0]
+    if (file) handleFileChange(file)
+  }
+
+  const handleGalleryChange = (e) => {
     const file = e.target.files[0]
     if (file) handleFileChange(file)
   }
@@ -87,21 +93,43 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
   const removeImage = () => {
     setPreview(null)
     onImageUpload('')
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = ''
     }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = ''
+    }
+  }
+
+  const openCamera = () => {
+    cameraInputRef.current?.click()
+  }
+
+  const openGallery = () => {
+    galleryInputRef.current?.click()
   }
 
   return (
     <div className={`image-upload ${className}`}>
+      {/* Kamera için input */}
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
-        onChange={handleInputChange}
+        onChange={handleCameraChange}
         className="image-upload__input"
-        id="image-upload-input"
+        id="camera-input"
+      />
+
+      {/* Galeri için input */}
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleGalleryChange}
+        className="image-upload__input"
+        id="gallery-input"
       />
 
       {preview ? (
@@ -118,13 +146,25 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
               <X size={20} />
             </button>
 
-            <label
-              htmlFor="image-upload-input"
+            <button
+              type="button"
+              onClick={openCamera}
               className="image-upload__change"
+              disabled={isUploading}
             >
               <Camera size={20} />
-              <span>Değiştir</span>
-            </label>
+              <span>Kamera</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openGallery}
+              className="image-upload__change"
+              disabled={isUploading}
+            >
+              <FolderOpen size={20} />
+              <span>Galeri</span>
+            </button>
           </div>
 
           {isUploading && (
@@ -154,21 +194,31 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
 
               <div className="image-upload__content">
                 <h3>Resim Yükle</h3>
-                <p>Kameradan çek veya galeriden seç</p>
+                <p>Kameradan çek, galeriden seç veya dosya sürükle</p>
               </div>
 
               <div className="image-upload__buttons">
-                <label
-                  htmlFor="image-upload-input"
+                <button
+                  type="button"
+                  onClick={openCamera}
                   className="image-upload__button primary"
                 >
                   <Camera size={20} />
-                  <span>Kamera / Galeri</span>
-                </label>
+                  <span>Kamera</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openGallery}
+                  className="image-upload__button secondary"
+                >
+                  <FolderOpen size={20} />
+                  <span>Galeri</span>
+                </button>
 
                 <label
-                  htmlFor="image-upload-input"
-                  className="image-upload__button secondary"
+                  htmlFor="gallery-input"
+                  className="image-upload__button tertiary"
                 >
                   <Upload size={20} />
                   <span>Dosya Seç</span>

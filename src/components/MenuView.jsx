@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Phone, Loader } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
@@ -11,6 +11,7 @@ function MenuView() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const menuSectionRef = useRef(null)
 
   // API'den menü ve kategori verilerini çek
   useEffect(() => {
@@ -47,33 +48,39 @@ function MenuView() {
     }
   }
 
-  const fetchMenuItems = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/menu`)
-      const data = await response.json()
-      
-      if (data.success) {
-        setMenuItems(data.data)
-      } else {
-        setError('Menü yüklenemedi')
-      }
-    } catch (err) {
-      setError('Bağlantı hatası')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Kategorileri dinamik olarak oluştur (API'dan gelen kategoriler + "Tümü")
   const allCategories = [
-    { id: 'all', name: 'Tümü', count: menuItems.length },
-    ...categories.map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      count: menuItems.filter(item => item.category === cat.id).length
-    }))
+    { 
+      id: 'all', 
+      name: 'Tümü', 
+      count: menuItems.length,
+      backgroundImage: menuItems.length > 0 ? menuItems[0].image : null
+    },
+    ...categories
+      .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR')) // Alfabetik sıralama
+      .map(cat => {
+        const categoryItems = menuItems.filter(item => item.category === cat.id)
+        return {
+          id: cat.id,
+          name: cat.name,
+          count: categoryItems.length,
+          backgroundImage: categoryItems.length > 0 ? categoryItems[0].image : null
+        }
+      })
   ]
+
+  // Kategori seçimi ve scroll
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId)
+    
+    // Menü kısmına smooth scroll
+    if (menuSectionRef.current) {
+      menuSectionRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+  }
 
   // Filtrelenmiş ürünler
   const filteredItems = selectedCategory === 'all' 
@@ -106,7 +113,7 @@ function MenuView() {
 
   return (
     <div className="menu-page">
-      {/* Enhanced Hero */}
+      {/* Sade Hero Section */}
       <div className="hero">
         <div className="hero-background"></div>
         <button className="back-btn" onClick={() => navigate('/')}>
@@ -130,7 +137,7 @@ function MenuView() {
         </div>
       </div>
 
-      {/* Enhanced Category Filter */}
+      {/* Modern Category Filter */}
       <div className="category-section">
         <div className="category-container">
           <div className="category-header">
@@ -141,21 +148,27 @@ function MenuView() {
               <button
                 key={category.id}
                 className={`category-filter ${selectedCategory === category.id ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => handleCategorySelect(category.id)}
               >
+                <div 
+                  className="category-background"
+                  {...(category.backgroundImage && {
+                    style: { backgroundImage: `url(${category.backgroundImage})` }
+                  })}
+                ></div>
+                <div className="category-overlay"></div>
                 <div className="category-content">
                   <span className="category-name">{category.name}</span>
-                  <span className="category-count">{category.count}</span>
+                  <span className="category-count">{category.count} ürün</span>
                 </div>
-                <div className="category-glow"></div>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Enhanced Menu Grid */}
-      <div className="menu-container">
+      {/* Sade Menu Grid */}
+      <div className="menu-container" ref={menuSectionRef}>
         <div className="section-info">
           <div className="section-header">
             <h3 className="section-title">
@@ -180,7 +193,7 @@ function MenuView() {
                 <div className="image-overlay"></div>
                 {item.popular && (
                   <div className="popular-tag">
-                    <span className="popular-icon">✨</span>
+                    <span>✨</span>
                     <span>Popüler</span>
                   </div>
                 )}
@@ -195,25 +208,65 @@ function MenuView() {
                 </div>
                 <p className="item-desc">{item.description}</p>
               </div>
-              <div className="item-shine"></div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Enhanced Footer */}
+      {/* Sade Footer */}
       <div className="footer">
-        <div className="footer-background"></div>
         <div className="footer-content">
           <div className="footer-main">
-            <h4 className="footer-title">QR Menu Cafe</h4>
-            <div className="contact">
-              <Phone size={18} />
-              <span>+90 212 555 0123</span>
+            <div className="footer-section">
+              <h4 className="footer-title">QR Menu Cafe</h4>
+              <p className="footer-description">
+                Lezzetli kahveler, taze yiyecekler ve samimi atmosfer. 
+                Her anınızı özel kılmak için buradayız.
+              </p>
+            </div>
+
+            <div className="footer-section">
+              <h5 className="footer-subtitle">İletişim</h5>
+              <div className="footer-contact">
+                <div className="contact-item">
+                  <Phone size={16} />
+                  <span>+90 xxx xxx xxxx</span>
+                </div>
+                <div className="contact-item">
+                  <span>📧</span>
+                  <span>info@qrmenucafe.com</span>
+                </div>
+                <div className="contact-item">
+                  <span>📍</span>
+                  <span>xxxxxx,xxxxx </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="footer-section">
+              <h5 className="footer-subtitle">Çalışma Saatleri</h5>
+              <div className="footer-hours">
+                <div className="hours-item">
+                  <span>Pazartesi - Cuma</span>
+                  <span>08:00 - 22:00</span>
+                </div>
+                <div className="hours-item">
+                  <span>Cumartesi - Pazar</span>
+                  <span>09:00 - 23:00</span>
+                </div>
+              </div>
             </div>
           </div>
+
           <div className="footer-bottom">
-            <p className="footer-text">Özenle hazırlanmış dijital deneyim</p>
+            <div className="footer-bottom-content">
+              <p className="footer-text">
+                © 2024 QR Menu Cafe. Tüm hakları saklıdır.
+              </p>
+              <p className="footer-text">
+                Ankara, Türkiye • www.qrmenucafe.com
+              </p>
+            </div>
           </div>
         </div>
       </div>
