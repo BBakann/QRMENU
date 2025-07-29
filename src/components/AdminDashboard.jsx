@@ -47,45 +47,7 @@ function AdminDashboard() {
     }
     fetchMenuItems()
     fetchCategories() // Kategorileri de yükle
-    
-    // Mevcut kategorileri otomatik ekle (eğer yoksa)
-    initializeDefaultCategories()
   }, [navigate])
-
-  // Varsayılan kategorileri ekle
-  const initializeDefaultCategories = async () => {
-    const defaultCategories = [
-      { id: 'hot-drinks', name: 'Sıcak İçecekler', description: 'Kahve, çay ve sıcak içecekler' },
-      { id: 'cold-drinks', name: 'Soğuk İçecekler', description: 'Meyve suları, gazlı içecekler' },
-      { id: 'food', name: 'Yemekler', description: 'Ana yemekler ve atıştırmalıklar' },
-      { id: 'desserts', name: 'Tatlılar', description: 'Çeşitli tatlılar' },
-      { id: 'snacks', name: 'Atıştırmalık', description: 'Küçük lezzetler' }
-    ];
-
-    try {
-      const token = localStorage.getItem('adminToken')
-      
-      for (const category of defaultCategories) {
-        // Kategori var mı kontrol et
-        const existing = categories.find(cat => cat.id === category.id);
-        if (!existing) {
-          await fetch(`${API_BASE_URL}/categories`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(category)
-          });
-        }
-      }
-      
-      // Kategorileri yenile
-      fetchCategories();
-    } catch (error) {
-      console.log('Varsayılan kategoriler eklenirken hata:', error);
-    }
-  }
 
   // Backend'den menü verilerini çek
   const fetchMenuItems = async () => {
