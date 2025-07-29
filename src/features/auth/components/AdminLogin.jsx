@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Lock, Eye, EyeOff } from 'lucide-react'
-import { API_BASE_URL } from '../config/api'
+import { API_BASE_URL } from '../../../shared'
 import './AdminLogin.css'
 
 function AdminLogin() {

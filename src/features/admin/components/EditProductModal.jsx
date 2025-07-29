@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Loader, Star, Eye, Package } from 'lucide-react'
-import { API_BASE_URL } from '../config/api'
-import ImageUpload from './ImageUpload'
-import './AddProductModal.css'
+import { X, Save, Loader, Star, Eye } from 'lucide-react'
+import { API_BASE_URL, ImageUpload } from '../../../shared'
+import './EditProductModal.css'
 
-function AddProductModal({ isOpen, onClose, onAdd }) {
+function EditProductModal({ product, isOpen, onClose, onUpdate }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -25,6 +24,22 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
     }
   }, [isOpen])
 
+  // Modal açıldığında ürün verilerini form'a doldur
+  useEffect(() => {
+    if (product && isOpen) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price || '',
+        category: product.category || 'food',
+        popular: product.popular || false,
+        available: product.available !== undefined ? product.available : true,
+        image: product.image || ''
+      })
+      setError('')
+    }
+  }, [product, isOpen])
+
   // Kategorileri API'dan çek
   const fetchCategories = async () => {
     try {
@@ -33,10 +48,6 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
       
       if (data.success) {
         setCategories(data.data)
-        // Eğer kategori boşsa ve kategoriler varsa ilkini seç
-        if (data.data.length > 0 && !formData.category) {
-          setFormData(prev => ({ ...prev, category: data.data[0].id }))
-        }
       }
     } catch (err) {
       console.error('Kategoriler yüklenirken hata:', err)
@@ -52,72 +63,18 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
     }))
   }
 
-  // Form temizle
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      category: 'food',
-      popular: false,
-      available: true,
-      image: ''
-    })
-    setError('')
-  }
-
-  // Modal kapandığında form'u temizle
-  const handleClose = () => {
-    resetForm()
-    onClose()
-  }
-
-  // Validation fonksiyonu ekle
-  const validateForm = () => {
-    const errors = []
-    
-    if (!formData.name.trim()) {
-      errors.push('Ürün adı gereklidir')
-    } else if (formData.name.length < 2) {
-      errors.push('Ürün adı en az 2 karakter olmalıdır')
-    }
-    
-    if (!formData.description.trim()) {
-      errors.push('Açıklama gereklidir')
-    } else if (formData.description.length < 10) {
-      errors.push('Açıklama en az 10 karakter olmalıdır')
-    }
-    
-    if (!formData.price || formData.price <= 0) {
-      errors.push('Geçerli bir fiyat giriniz')
-    } else if (formData.price > 10000) {
-      errors.push('Fiyat 10.000₺\'den fazla olamaz')
-    }
-    
-    if (formData.image && !isValidUrl(formData.image)) {
-      errors.push('Geçerli bir görsel URL\'si giriniz')
-    }
-    
-    return errors
-  }
-
-  // URL validation helper
-  const isValidUrl = (string) => {
-    try {
-      new URL(string)
-      return true
-    } catch (_) {
-      return false
-    }
-  }
-
   // Form submit
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    const validationErrors = validateForm()
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join(', '))
+    // Validation
+    if (!formData.name.trim() || !formData.description.trim() || !formData.price) {
+      setError('İsim, açıklama ve fiyat alanları gereklidir!')
+      return
+    }
+
+    if (formData.price <= 0) {
+      setError('Fiyat 0\'dan büyük olmalıdır!')
       return
     }
 
@@ -126,8 +83,8 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
 
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`${API_BASE_URL}/menu`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/menu/${product._id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -141,11 +98,10 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
       const data = await response.json()
 
       if (data.success) {
-        onAdd(data.data) // Parent component'e yeni ürünü gönder
-        resetForm()
+        onUpdate(data.data) // Parent'a güncellenmiş ürünü gönder (parent toast gösterecek)
         onClose()
       } else {
-        setError(data.message || 'Ürün ekleme başarısız')
+        setError(data.message || 'Güncelleme başarısız')
       }
     } catch (err) {
       setError('Bağlantı hatası')
@@ -158,24 +114,16 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content add-product-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="modal-header-left">
-            <div className="modal-icon">
-              <Package size={24} />
-            </div>
-            <div>
-              <h2 className="modal-title">Yeni Ürün Ekle</h2>
-              <p className="modal-subtitle">Menüye yeni bir ürün ekleyin</p>
-            </div>
-          </div>
-          <button className="modal-close" onClick={handleClose}>
+          <h2 className="modal-title">Ürün Düzenle</h2>
+          <button className="modal-close" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <form className="add-form" onSubmit={handleSubmit}>
+        <form className="edit-form" onSubmit={handleSubmit}>
           {error && (
             <div className="error-message">
               {error}
@@ -200,7 +148,7 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Örn: Türk Kahvesi, Margarita Pizza..."
+              placeholder="Ürün adını girin"
               className="form-input"
               required
             />
@@ -214,7 +162,7 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Ürününüzün lezzetli açıklamasını yazın..."
+              placeholder="Ürün açıklamasını girin"
               className="form-textarea"
               rows="3"
               required
@@ -321,25 +269,25 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
             <button
               type="button"
               className="btn-cancel"
-              onClick={handleClose}
+              onClick={onClose}
               disabled={isLoading}
             >
               İptal
             </button>
             <button
               type="submit"
-              className="btn-save btn-add"
+              className="btn-save"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader size={16} className="loading-icon" />
-                  Ekleniyor...
+                  Güncelleniyor...
                 </>
               ) : (
                 <>
                   <Save size={16} />
-                  Ürün Ekle
+                  Güncelle
                 </>
               )}
             </button>
@@ -350,4 +298,4 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
   )
 }
 
-export default AddProductModal 
+export default EditProductModal 

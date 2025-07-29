@@ -1,9 +1,9 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import WelcomePage from './components/WelcomePage'
-import MenuView from './components/MenuView'
-import AdminLogin from './components/AdminLogin'
-import AdminDashboard from './components/AdminDashboard'
+import { WelcomePage } from './features/home'
+import { MenuView } from './features/menu'
+import { AdminLogin } from './features/auth'
+import { AdminDashboard } from './features/admin'
 import './App.css'
 
 // Page transition variants

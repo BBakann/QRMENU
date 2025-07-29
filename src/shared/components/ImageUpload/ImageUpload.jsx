@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Camera, Upload, X, Image as ImageIcon, FolderOpen } from 'lucide-react'
-import { API_BASE_URL } from '../config/api.js'
+import { API_BASE_URL } from '../../../shared/config/api'
 import './ImageUpload.css'
 
 const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => {

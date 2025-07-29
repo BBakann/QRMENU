@@ -5,11 +5,10 @@ import {
   Search, Filter, Eye, EyeOff, Star, Clock, User, Tag
 } from 'lucide-react'
 import EditProductModal from './EditProductModal'
-import Toast from './Toast'
-import { useToast } from '../hooks/useToast'
+import { Toast, useToast } from '../../../shared'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
-import { API_BASE_URL } from '../config/api'
+import { API_BASE_URL } from '../../../shared'
 
 function AdminDashboard() {
   const navigate = useNavigate()
