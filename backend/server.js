@@ -6,6 +6,7 @@ import connectDatabase from './config/database.js';
 import adminRoutes from './routes/admin.js';
 import menuRoutes from './routes/menu.js';
 import categoryRoutes from './routes/categories.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express();
 const PORT = config.server.port;
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Test Route - Debug için
 app.get('/', (req, res) => {
@@ -79,7 +81,7 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🌍 Environment: ${config.server.nodeEnv}`);
     console.log(`🔗 URL: http://localhost:${PORT}`);
     console.log(`🎯 Frontend URL: ${config.cors.frontendUrl}`);
-    console.log('📋 Routes loaded: /api/admin, /api/menu');
+    console.log('📋 Routes loaded: /api/admin, /api/menu, /api/categories, /api/upload');
     console.log('✅ Backend hazır!');
   });
 }

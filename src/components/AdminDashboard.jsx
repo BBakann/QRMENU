@@ -582,69 +582,69 @@ function AdminDashboard() {
                   <p className="content-subtitle">{filteredItems.length} ürün gösteriliyor</p>
                 </div>
 
-                <div className="products-grid">
-                  {filteredItems.map((item, index) => (
-                    <div 
-                      key={item._id} 
-                      className="product-card"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="product-image">
-                        <img src={item.image} alt={item.name} />
-                        <div className="product-badges">
-                          {item.popular && (
-                            <span className="badge badge--popular">
-                              <Star size={12} />
-                              Popüler
-                            </span>
-                          )}
-                          {!item.available && (
-                            <span className="badge badge--unavailable">
-                              <EyeOff size={12} />
-                              Tükendi
-                            </span>
-                          )}
+                  <div className="products-grid">
+                    {filteredItems.map((item, index) => (
+                      <div 
+                        key={item._id} 
+                        className="product-card"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="product-image">
+                          <img src={item.image} alt={item.name} />
+                          <div className="product-badges">
+                            {item.popular && (
+                              <span className="badge badge--popular">
+                                <Star size={12} />
+                                Popüler
+                              </span>
+                            )}
+                            {!item.available && (
+                              <span className="badge badge--unavailable">
+                                <EyeOff size={12} />
+                                Tükendi
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="product-info">
-                        <div className="product-header">
-                          <h4 className="product-name">{item.name}</h4>
-                          <span className="product-price">{item.price}₺</span>
-                        </div>
-                        
-                        <p className="product-description">{item.description}</p>
-                        
-                        <div className="product-meta">
-                          <span className="product-category">
+                        <div className="product-info">
+                          <div className="product-header">
+                            <h4 className="product-name">{item.name}</h4>
+                            <span className="product-price">{item.price}₺</span>
+                          </div>
+                          
+                          <p className="product-description">{item.description}</p>
+                          
+                          <div className="product-meta">
+                            <span className="product-category">
                             {categories.find(cat => cat.id === item.category)?.name || item.category}
-                          </span>
-                          <span className="product-date">
-                            <Clock size={12} />
-                            {new Date(item.createdAt).toLocaleDateString('tr-TR')}
-                          </span>
-                        </div>
+                            </span>
+                            <span className="product-date">
+                              <Clock size={12} />
+                              {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                            </span>
+                          </div>
 
-                        <div className="product-actions">
-                          <button 
-                            className="action-btn action-btn--edit"
-                            onClick={() => openEditModal(item)}
-                          >
-                            <Edit3 size={16} />
-                            Düzenle
-                          </button>
-                          <button 
-                            className="action-btn action-btn--delete"
-                            onClick={() => deleteMenuItem(item._id)}
-                          >
-                            <Trash2 size={16} />
-                            Sil
-                          </button>
+                          <div className="product-actions">
+                            <button 
+                              className="action-btn action-btn--edit"
+                              onClick={() => openEditModal(item)}
+                            >
+                              <Edit3 size={16} />
+                              Düzenle
+                            </button>
+                            <button 
+                              className="action-btn action-btn--delete"
+                              onClick={() => deleteMenuItem(item._id)}
+                            >
+                              <Trash2 size={16} />
+                              Sil
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
               </>
             ) : (
               <div className="no-results">

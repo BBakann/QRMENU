@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
+import ImageUpload from './ImageUpload'
 import './EditProductModal.css'
 
 function EditProductModal({ product, isOpen, onClose, onUpdate }) {
@@ -130,23 +131,12 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
             </div>
           )}
 
-          {/* Ürün Resmi Preview */}
+          {/* Ürün Görseli Upload */}
           <div className="form-group">
             <label>Ürün Görseli</label>
-            <div className="image-preview">
-              <img 
-                src={formData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=400&fit=crop'} 
-                alt="Preview" 
-                className="preview-img"
-              />
-            </div>
-            <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="Görsel URL'si (opsiyonel)"
-              className="form-input"
+            <ImageUpload
+              onImageUpload={(imageUrl) => setFormData(prev => ({ ...prev, image: imageUrl }))}
+              currentImage={formData.image}
             />
           </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye, Package } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
+import ImageUpload from './ImageUpload'
 import './AddProductModal.css'
 
 function AddProductModal({ isOpen, onClose, onAdd }) {
@@ -181,27 +182,12 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
             </div>
           )}
 
-          {/* Ürün Resmi Preview */}
+          {/* Ürün Görseli Upload */}
           <div className="form-group">
             <label>Ürün Görseli</label>
-            <div className="image-preview">
-              <img 
-                src={formData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=400&fit=crop'} 
-                alt="Preview" 
-                className="preview-img"
-              />
-              <div className="image-placeholder">
-                <Package size={32} />
-                <span>Görsel URL ekleyin</span>
-              </div>
-            </div>
-            <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="https://images.unsplash.com/photo-..."
-              className="form-input"
+            <ImageUpload
+              onImageUpload={(imageUrl) => setFormData(prev => ({ ...prev, image: imageUrl }))}
+              currentImage={formData.image}
             />
           </div>
 
