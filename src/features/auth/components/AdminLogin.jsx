@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Lock, Eye, EyeOff } from 'lucide-react'
 import { API_BASE_URL } from '../../../shared'
+import { sanitizeHtml, validateInput } from '../../../shared/utils/sanitize'
+import { addCSRFToken } from '../../../shared/utils/csrf'
 import './AdminLogin.css'
 
 function AdminLogin() {
@@ -27,12 +29,25 @@ function AdminLogin() {
     setIsLoading(true)
     setError('')
 
+    // Frontend validation
+    if (!validateInput(formData.username, 'text')) {
+      setError('Kullanıcı adı geçerli değil')
+      setIsLoading(false)
+      return
+    }
+
+    if (!validateInput(formData.password, 'text')) {
+      setError('Şifre geçerli değil')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: {
+        headers: addCSRFToken({
           'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(formData)
       })
 
@@ -69,8 +84,7 @@ function AdminLogin() {
 
         <form className="admin-login__form" onSubmit={handleSubmit}>
           {error && (
-            <div className="admin-login__error">
-              {error}
+            <div className="admin-login__error" dangerouslySetInnerHTML={{ __html: sanitizeHtml(error) }}>
             </div>
           )}
 

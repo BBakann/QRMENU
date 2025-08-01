@@ -2,11 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import config from './config/config.js';
-import connectDatabase from './config/database.js';
-import adminRoutes from './routes/admin.js';
-import menuRoutes from './routes/menu.js';
-import categoryRoutes from './routes/categories.js';
-import uploadRoutes from './routes/upload.js';
+import { connectDatabase } from './db/index.js';
+import { createCorsMiddleware } from './helpers/index.js';
+import { securityHeaders, corsSecurity, requestSizeLimit } from './middlewares/security.js';
+import { generalRateLimit } from './middlewares/rateLimit.js';
+import { sessionProtection } from './middlewares/session.js';
+import authRoutes from './routes/authRoutes.js';
+import menuRoutes from './routes/menuRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
 const PORT = config.server.port;
@@ -14,25 +18,26 @@ const PORT = config.server.port;
 // Database bağlantısı
 connectDatabase();
 
-// CORS ayarları - Development için basitleştirildi
-if (process.env.NODE_ENV === 'production') {
-    app.use(cors({
-        origin: config.cors.allowedOrigins,
-        credentials: true
-    }));
-} else {
-    // Development için tüm localhost'lara izin ver
-    app.use(cors({
-        origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080'],
-        credentials: true
-    }));
-}
+// Security headers
+app.use(securityHeaders);
+app.use(corsSecurity);
 
-app.use(morgan('combined'));
+// CORS ayarları
+app.use(createCorsMiddleware(cors));
+
+// Request size limiting
+app.use(requestSizeLimit);
+
+// General rate limiting
+app.use(generalRateLimit);
+
+// Session protection
+app.use(sessionProtection);
+
 app.use(express.json());
 
 // Routes
-app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/upload', uploadRoutes);

@@ -1,9 +1,5 @@
-import express from 'express';
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
-import { authenticateAdmin } from '../utils/jwt.js';
-
-const router = express.Router();
 
 // Multer configuration - memory storage için
 const storage = multer.memoryStorage();
@@ -13,17 +9,26 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req, file, cb) => {
-        // Sadece resim dosyalarına izin ver
-        if (file.mimetype.startsWith('image/')) {
+        // Dosya uzantısı kontrolü
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const fileExtension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+        
+        // MIME type kontrolü
+        const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        
+        if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
             cb(null, true);
         } else {
-            cb(new Error('Sadece resim dosyaları yüklenebilir'), false);
+            cb(new Error('Sadece JPG, PNG ve WebP dosyaları yüklenebilir'), false);
         }
     }
 });
 
-// Resim yükleme route'u - SADECE ADMİN
-router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => {
+// Multer middleware'ini export et
+export const uploadMiddleware = upload.single('image');
+
+// Resim yükleme
+export const uploadImage = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -72,10 +77,10 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
             error: error.message
         });
     }
-});
+};
 
-// Resim silme route'u - SADECE ADMİN
-router.delete('/:public_id', authenticateAdmin, async (req, res) => {
+// Resim silme
+export const deleteImage = async (req, res) => {
     try {
         const { public_id } = req.params;
         
@@ -98,6 +103,4 @@ router.delete('/:public_id', authenticateAdmin, async (req, res) => {
             error: error.message
         });
     }
-});
-
-export default router; 
+}; 

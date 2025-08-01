@@ -1,10 +1,14 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { WelcomePage } from './features/home'
-import { MenuView } from './features/menu'
-import { AdminLogin } from './features/auth'
-import { AdminDashboard } from './features/admin'
+import { lazy, Suspense } from 'react'
+import ProtectedRoute from './shared/components/ProtectedRoute/ProtectedRoute'
 import './App.css'
+
+// Lazy load components for better performance
+const WelcomePage = lazy(() => import('./features/home').then(module => ({ default: module.WelcomePage })))
+const MenuView = lazy(() => import('./features/menu').then(module => ({ default: module.MenuView })))
+const AdminLogin = lazy(() => import('./features/auth').then(module => ({ default: module.AdminLogin })))
+const AdminDashboard = lazy(() => import('./features/admin').then(module => ({ default: module.AdminDashboard })))
 
 // Page transition variants
 const pageVariants = {
@@ -51,30 +55,39 @@ function App() {
   
   return (
     <div className="app">
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={
-            <AnimatedRoute>
-              <WelcomePage />
-            </AnimatedRoute>
-          } />
-          <Route path="/menu" element={
-            <AnimatedRoute>
-              <MenuView />
-            </AnimatedRoute>
-          } />
-          <Route path="/admin" element={
-            <AnimatedRoute>
-              <AdminLogin />
-            </AnimatedRoute>
-          } />
-          <Route path="/admin/dashboard" element={
-            <AnimatedRoute>
-              <AdminDashboard />
-            </AnimatedRoute>
-          } />
-        </Routes>
-      </AnimatePresence>
+      <Suspense fallback={
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Yükleniyor...</p>
+        </div>
+      }>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={
+              <AnimatedRoute>
+                <WelcomePage />
+              </AnimatedRoute>
+            } />
+            <Route path="/menu" element={
+              <AnimatedRoute>
+                <MenuView />
+              </AnimatedRoute>
+            } />
+            <Route path="/admin" element={
+              <AnimatedRoute>
+                <AdminLogin />
+              </AnimatedRoute>
+            } />
+            <Route path="/admin/dashboard" element={
+              <AnimatedRoute>
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              </AnimatedRoute>
+            } />
+          </Routes>
+        </AnimatePresence>
+      </Suspense>
     </div>
   )
 }

@@ -1,11 +1,7 @@
-import express from 'express';
-import { authenticateAdmin } from '../utils/jwt.js';
 import Product from '../models/Product.js';
 
-const router = express.Router();
-
-// Tüm ürünleri getir - HERKESE AÇIK
-router.get('/', async (req, res) => {
+// Tüm ürünleri getir
+export const getAllProducts = async (req, res) => {
     try {
         const products = await Product.find({ available: true })
             .sort({ popular: -1, createdAt: -1 });
@@ -22,10 +18,10 @@ router.get('/', async (req, res) => {
             message: 'Menü yüklenirken hata oluştu'
         });
     }
-});
+};
 
-// ID ile tek ürün getir - HERKESE AÇIK
-router.get('/:id', async (req, res) => {
+// ID ile tek ürün getir
+export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         
@@ -47,10 +43,10 @@ router.get('/:id', async (req, res) => {
             message: 'Ürün yüklenirken hata oluştu'
         });
     }
-});
+};
 
-// Kategori bazında ürünler - HERKESE AÇIK
-router.get('/category/:category', async (req, res) => {
+// Kategori bazında ürünler
+export const getProductsByCategory = async (req, res) => {
     try {
         const { category } = req.params;
         const products = await Product.find({ 
@@ -71,12 +67,10 @@ router.get('/category/:category', async (req, res) => {
             message: 'Kategori yüklenirken hata oluştu'
         });
     }
-});
+};
 
-// ADMIN ROUTES - TOKEN GEREKLİ
-
-// Yeni ürün ekle - SADECE ADMİN
-router.post('/', authenticateAdmin, async (req, res) => {
+// Yeni ürün ekle (ADMIN)
+export const createProduct = async (req, res) => {
     try {
         const { name, description, price, category, popular, image } = req.body;
         
@@ -98,7 +92,7 @@ router.post('/', authenticateAdmin, async (req, res) => {
             createdBy: req.user.username,
             updatedBy: req.user.username
         });
-        
+
         const savedProduct = await newProduct.save();
         
         console.log(`✅ Admin ${req.user.username} yeni ürün ekledi: ${name}`);
@@ -115,36 +109,35 @@ router.post('/', authenticateAdmin, async (req, res) => {
             message: 'Ürün eklenirken hata oluştu'
         });
     }
-});
+};
 
-// Ürün güncelle - SADECE ADMİN
-router.put('/:id', authenticateAdmin, async (req, res) => {
+// Ürün güncelle (ADMIN)
+export const updateProduct = async (req, res) => {
     try {
-        const { name, description, price, category, popular, available, image } = req.body;
+        const { id } = req.params;
+        const updateData = req.body;
         
-        const product = await Product.findById(req.params.id);
+        // Fiyat varsa number'a çevir
+        if (updateData.price) {
+            updateData.price = parseFloat(updateData.price);
+        }
         
-        if (!product) {
+        updateData.updatedBy = req.user.username;
+        
+        const updatedProduct = await Product.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedProduct) {
             return res.status(404).json({
                 success: false,
                 message: 'Ürün bulunamadı'
             });
         }
         
-        // Update fields
-        if (name) product.name = name;
-        if (description) product.description = description;
-        if (price) product.price = parseFloat(price);
-        if (category) product.category = category;
-        if (popular !== undefined) product.popular = popular;
-        if (available !== undefined) product.available = available;
-        if (image) product.image = image;
-        
-        product.updatedBy = req.user.username;
-        
-        const updatedProduct = await product.save();
-        
-        console.log(`✅ Admin ${req.user.username} ürün güncelledi: ${product.name}`);
+        console.log(`✅ Admin ${req.user.username} ürün güncelledi: ${updatedProduct.name}`);
         
         res.json({
             success: true,
@@ -158,71 +151,28 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
             message: 'Ürün güncellenirken hata oluştu'
         });
     }
-});
+};
 
-// Sadece fiyat güncelle - SADECE ADMİN
-router.patch('/:id/price', authenticateAdmin, async (req, res) => {
+// Ürün sil (ADMIN)
+export const deleteProduct = async (req, res) => {
     try {
-        const { price } = req.body;
+        const { id } = req.params;
         
-        if (!price || price <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçerli bir fiyat giriniz!'
-            });
-        }
+        const deletedProduct = await Product.findByIdAndDelete(id);
         
-        const product = await Product.findById(req.params.id);
-        
-        if (!product) {
+        if (!deletedProduct) {
             return res.status(404).json({
                 success: false,
                 message: 'Ürün bulunamadı'
             });
         }
         
-        const oldPrice = product.price;
-        product.price = parseFloat(price);
-        product.updatedBy = req.user.username;
-        
-        await product.save();
-        
-        console.log(`💰 Admin ${req.user.username} fiyat güncelledi: ${product.name} (${oldPrice}₺ → ${price}₺)`);
+        console.log(`✅ Admin ${req.user.username} ürün sildi: ${deletedProduct.name}`);
         
         res.json({
             success: true,
-            message: `Fiyat ${oldPrice}₺'den ${price}₺'ye güncellendi`,
-            data: product
-        });
-    } catch (error) {
-        console.error('Price update error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Fiyat güncellenirken hata oluştu'
-        });
-    }
-});
-
-// Ürün sil - SADECE ADMİN
-router.delete('/:id', authenticateAdmin, async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Ürün bulunamadı'
-            });
-        }
-        
-        await Product.findByIdAndDelete(req.params.id);
-        
-        console.log(`🗑️  Admin ${req.user.username} ürün sildi: ${product.name}`);
-        
-        res.json({
-            success: true,
-            message: `"${product.name}" başarıyla silindi`,
-            data: product
+            message: 'Ürün başarıyla silindi',
+            data: { id: deletedProduct._id, name: deletedProduct.name }
         });
     } catch (error) {
         console.error('Product deletion error:', error);
@@ -231,13 +181,13 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
             message: 'Ürün silinirken hata oluştu'
         });
     }
-});
+};
 
-// Admin için tüm ürünleri getir (available: false olanlar dahil)
-router.get('/admin/all', authenticateAdmin, async (req, res) => {
+// Admin için tüm ürünleri getir (inactive dahil)
+export const getAllProductsForAdmin = async (req, res) => {
     try {
         const products = await Product.find({})
-            .sort({ createdAt: -1 });
+            .sort({ popular: -1, createdAt: -1 });
         
         res.json({
             success: true,
@@ -245,12 +195,10 @@ router.get('/admin/all', authenticateAdmin, async (req, res) => {
             count: products.length
         });
     } catch (error) {
-        console.error('Admin products fetch error:', error);
+        console.error('Admin menu fetch error:', error);
         res.status(500).json({
             success: false,
-            message: 'Ürünler yüklenirken hata oluştu'
+            message: 'Menü yüklenirken hata oluştu'
         });
     }
-});
-
-export default router;
+}; 

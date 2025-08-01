@@ -1,11 +1,8 @@
-import express from 'express';
-import { authenticateAdmin } from '../utils/jwt.js';
 import Category from '../models/Category.js';
-
-const router = express.Router();
+import Product from '../models/Product.js';
 
 // Tüm kategorileri getir - HERKESE AÇIK
-router.get('/', async (req, res) => {
+export const getAllCategories = async (req, res) => {
     try {
         const categories = await Category.find({ active: true })
             .sort({ sortOrder: 1, createdAt: 1 });
@@ -22,10 +19,10 @@ router.get('/', async (req, res) => {
             message: 'Kategoriler yüklenirken hata oluştu'
         });
     }
-});
+};
 
 // Admin için tüm kategorileri getir (inactive dahil)
-router.get('/admin/all', authenticateAdmin, async (req, res) => {
+export const getAllCategoriesForAdmin = async (req, res) => {
     try {
         const categories = await Category.find({})
             .sort({ sortOrder: 1, createdAt: 1 });
@@ -42,10 +39,10 @@ router.get('/admin/all', authenticateAdmin, async (req, res) => {
             message: 'Kategoriler yüklenirken hata oluştu'
         });
     }
-});
+};
 
 // Yeni kategori oluştur - SADECE ADMİN
-router.post('/', authenticateAdmin, async (req, res) => {
+export const createCategory = async (req, res) => {
     try {
         const { id, name, description, sortOrder } = req.body;
 
@@ -91,10 +88,10 @@ router.post('/', authenticateAdmin, async (req, res) => {
             message: 'Kategori oluşturulurken hata oluştu'
         });
     }
-});
+};
 
 // Kategori sil - SADECE ADMİN
-router.delete('/:id', authenticateAdmin, async (req, res) => {
+export const deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -108,8 +105,6 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
         }
 
         // Bu kategoriye ait ürün sayısını kontrol et
-        const Product = (await import('../models/Product.js')).default;
-        
         console.log(`🔍 Kategori siliniyor: ${id.toLowerCase()}`);
         
         // Önce bu kategorideki ürünleri listele
@@ -147,6 +142,4 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
             message: 'Kategori silinirken hata oluştu'
         });
     }
-});
-
-export default router;
+}; 

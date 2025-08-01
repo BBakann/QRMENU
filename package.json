@@ -10,7 +10,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo \"No tests specified\" && exit 0",
+    "lighthouse": "lhci autorun",
+    "security-audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "framer-motion": "^12.23.6",

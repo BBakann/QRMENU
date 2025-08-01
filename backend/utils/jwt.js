@@ -4,14 +4,21 @@ import config from '../config/config.js';
 // Token oluştur
 export const generateToken = (payload) => {
   return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn
+    expiresIn: config.jwt.expiresIn,
+    algorithm: 'HS256',
+    issuer: 'qrmenu-api',
+    audience: 'qrmenu-admin'
   });
 };
 
 // Token doğrula
 export const verifyToken = (token) => {
   try {
-    return jwt.verify(token, config.jwt.secret);
+    return jwt.verify(token, config.jwt.secret, {
+      algorithms: ['HS256'],
+      issuer: 'qrmenu-api',
+      audience: 'qrmenu-admin'
+    });
   } catch (error) {
     return null;
   }

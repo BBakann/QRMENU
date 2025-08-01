@@ -9,6 +9,7 @@ import { Toast, useToast } from '../../../shared'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
 import { API_BASE_URL } from '../../../shared'
+import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -39,14 +40,9 @@ function AdminDashboard() {
 
   // Sayfa yüklendiğinde çalışır
   useEffect(() => {
-    const token = localStorage.getItem('adminToken')
-    if (!token) {
-      navigate('/admin')
-      return
-    }
     fetchMenuItems()
     fetchCategories() // Kategorileri de yükle
-  }, [navigate])
+  }, [])
 
   // Backend'den menü verilerini çek
   const fetchMenuItems = async () => {
@@ -285,7 +281,12 @@ function AdminDashboard() {
               </div>
             </div>
             
-            <button className="logout-btn" onClick={handleLogout}>
+            <button 
+              className="logout-btn" 
+              onClick={handleLogout}
+              aria-label="Çıkış yap"
+              title="Çıkış yap"
+            >
               <LogOut size={16} />
               <span>Çıkış</span>
             </button>
@@ -365,6 +366,8 @@ function AdminDashboard() {
           <button 
             className="add-category-btn"
             onClick={() => setShowCategoryForm(!showCategoryForm)}
+            aria-label="Kategori ekle"
+            title="Kategori ekle"
           >
             <Plus size={16} />
             <span>Kategori Ekle</span>
@@ -414,7 +417,12 @@ function AdminDashboard() {
               </div>
               
               <div className="form-actions">
-                <button type="button" onClick={() => setShowCategoryForm(false)} className="btn-cancel">
+                <button 
+                  type="button" 
+                  onClick={() => setShowCategoryForm(false)} 
+                  className="btn-cancel"
+                  aria-label="Kategori ekleme formunu iptal et"
+                >
                   İptal
                 </button>
                 <button type="submit" className="btn-submit">
@@ -448,6 +456,8 @@ function AdminDashboard() {
                     <button 
                       className="action-btn action-btn--delete"
                       onClick={() => handleCategoryDelete(category.id, category.name)}
+                      aria-label={`${category.name} kategorisini sil`}
+                      title={`${category.name} kategorisini sil`}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -481,10 +491,13 @@ function AdminDashboard() {
 
             <div className="filter-container">
               <Filter size={18} className="filter-icon" />
+              <label htmlFor="category-filter" className="sr-only">Kategori seçin</label>
               <select
+                id="category-filter"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="filter-select"
+                aria-label="Kategori filtrele"
               >
                 <option value="all">Tüm Kategoriler</option>
                 {categories
@@ -501,7 +514,12 @@ function AdminDashboard() {
           </div>
 
           <div className="controls-right">
-            <button className="add-btn" onClick={openAddModal}>
+            <button 
+              className="add-btn" 
+              onClick={openAddModal}
+              aria-label="Yeni ürün ekle"
+              title="Yeni ürün ekle"
+            >
               <Plus size={18} />
               <span>Yeni Ürün</span>
             </button>
@@ -528,7 +546,7 @@ function AdminDashboard() {
             {filteredItems.length > 0 ? (
               <>
                 <div className="content-header">
-                  <h3 className="content-title">Ürün Listesi</h3>
+                  <h2 className="content-title">Ürün Listesi</h2>
                   <p className="content-subtitle">{filteredItems.length} ürün gösteriliyor</p>
                 </div>
 
@@ -540,7 +558,13 @@ function AdminDashboard() {
                         style={{ animationDelay: `${index * 0.05}s` }}
                       >
                         <div className="product-image">
-                          <img src={item.image} alt={item.name} />
+                          <img 
+                            src={optimizeImageUrl(item.image, 400, 300, 'webp')} 
+                            alt={item.name}
+                            loading="lazy"
+                            width="400"
+                            height="300"
+                          />
                           <div className="product-badges">
                             {item.popular && (
                               <span className="badge badge--popular">

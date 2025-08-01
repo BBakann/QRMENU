@@ -1,9 +1,6 @@
-import express from 'express';
 import { generateToken, authenticateAdmin } from '../utils/jwt.js';
 import { comparePassword, hashPassword } from '../utils/password.js';
 import config from '../config/config.js';
-
-const router = express.Router();
 
 // Admin bilgileri - TAMAMEN .env'den
 const ADMIN_USER = {
@@ -14,8 +11,8 @@ const ADMIN_USER = {
     role: 'admin'
 };
 
-// Admin giriş route'u - Bcrypt ile şifre kontrolü
-router.post('/login', async (req, res) => {
+// Admin giriş
+export const adminLogin = async (req, res) => {
     const { username, password } = req.body;
     
     console.log('Admin login attempt for user:', username);
@@ -69,28 +66,28 @@ router.post('/login', async (req, res) => {
             message: 'Sunucu hatası'
         });
     }
-});
+};
 
 // Admin profil bilgisi
-router.get('/profile', authenticateAdmin, (req, res) => {
+export const getAdminProfile = (req, res) => {
     res.json({
         success: true,
         user: req.user,
         message: 'Admin profil bilgileri başarıyla alındı'
     });
-});
+};
 
 // Token doğrulama
-router.get('/verify', authenticateAdmin, (req, res) => {
+export const verifyToken = (req, res) => {
     res.json({
         success: true,
         message: 'Token geçerli',
         user: req.user
     });
-});
+};
 
 // Şifre değiştirme - yeni hash'i konsola yazdırır
-router.post('/change-password', authenticateAdmin, async (req, res) => {
+export const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     try {
@@ -122,15 +119,13 @@ router.post('/change-password', authenticateAdmin, async (req, res) => {
             message: 'Şifre değiştirilirken hata oluştu'
         });
     }
-});
+};
 
 // Admin logout
-router.post('/logout', authenticateAdmin, (req, res) => {
+export const adminLogout = (req, res) => {
     console.log(`👋 Admin ${req.user.username} çıkış yaptı`);
     res.json({
         success: true,
         message: 'Çıkış başarılı'
     });
-});
-
-export default router;
+}; 
