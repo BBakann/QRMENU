@@ -10,9 +10,9 @@ updates:
       timezone: "Europe/Istanbul"
     open-pull-requests-limit: 5
     reviewers:
-      - "berdanakay"
+      - "berdanbakan"
     assignees:
-      - "berdanakay"
+      - "berdanbakan"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -38,9 +38,9 @@ updates:
       timezone: "Europe/Istanbul"
     open-pull-requests-limit: 5
     reviewers:
-      - "berdanakay"
+      - "berdanbakan"
     assignees:
-      - "berdanakay"
+      - "berdanbakan"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -66,9 +66,9 @@ updates:
       timezone: "Europe/Istanbul"
     open-pull-requests-limit: 3
     reviewers:
-      - "berdanakay"
+      - "berdanbakan"
     assignees:
-      - "berdanakay"
+      - "berdanbakan"
     commit-message:
       prefix: "ci"
       include: "scope"

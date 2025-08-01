@@ -1,0 +1,84 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Her gün saat 02:00'de güvenlik taraması
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Manuel tetikleme için
+
+jobs:
+  # Dependency Vulnerability Scan
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Frontend Security Audit
+        run: |
+          npm audit --audit-level=moderate
+          npm audit --audit-level=high --json > frontend-audit.json || true
+
+      - name: Backend Security Audit
+        run: |
+          cd backend
+          npm audit --audit-level=moderate
+          npm audit --audit-level=high --json > ../backend-audit.json || true
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-reports
+          path: |
+            frontend-audit.json
+            backend-audit.json
+
+  # CodeQL Security Analysis
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # Container Security Scan
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif' 
