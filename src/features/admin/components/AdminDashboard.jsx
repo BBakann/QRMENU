@@ -11,7 +11,7 @@ import AddProductModal from './AddProductModal'
 import { API_BASE_URL } from '../../../shared'
 import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
 
-function AdminDashboard() {
+export default function AdminDashboard() {
   const navigate = useNavigate()
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState([]) // Kategoriler state'i
@@ -661,5 +661,3 @@ function AdminDashboard() {
     </div>
   )
 }
-
-export default AdminDashboard 

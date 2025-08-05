@@ -1,14 +1,9 @@
 User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://qrmenu-cafe.vercel.app/sitemap.xml
-
-# Disallow admin pages
 Disallow: /admin
 Disallow: /admin/dashboard
 Disallow: /admin/login
 
-# Allow important pages
 Allow: /
-Allow: /menu 
+Allow: /menu
+
+Sitemap: https://qrmenu-cafe.vercel.app/sitemap.xml
