@@ -26,6 +26,10 @@ export const corsSecurity = (req, res, next) => {
   res.header('X-XSS-Protection', '1; mode=block');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // SEO için robots tag'ini kaldır
+  res.removeHeader('X-Robots-Tag');
+  
   next();
 };
 
