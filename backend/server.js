@@ -15,6 +15,9 @@ import uploadRoutes from './routes/uploadRoutes.js';
 const app = express();
 const PORT = config.server.port;
 
+// Trust proxy for Vercel
+app.set('trust proxy', 1);
+
 // Database bağlantısı
 connectDatabase();
 
