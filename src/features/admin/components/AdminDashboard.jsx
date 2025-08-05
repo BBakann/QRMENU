@@ -11,7 +11,7 @@ import AddProductModal from './AddProductModal'
 import { API_BASE_URL } from '../../../shared'
 import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const navigate = useNavigate()
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState([]) // Kategoriler state'i
@@ -40,6 +40,8 @@ export default function AdminDashboard() {
 
   // Sayfa yüklendiğinde çalışır
   useEffect(() => {
+    console.log(' AdminDashboard - NODE_ENV:', process.env.NODE_ENV)
+    console.log('🔍 AdminDashboard - API_BASE_URL:', API_BASE_URL)
     fetchMenuItems()
     fetchCategories() // Kategorileri de yükle
   }, [])
@@ -661,3 +663,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
+export default AdminDashboard 
