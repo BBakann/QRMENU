@@ -4,14 +4,11 @@ Allow: /
 # Sitemap
 Sitemap: https://qrmenu-cafe.vercel.app/sitemap.xml
 
-# Crawl-delay
-Crawl-delay: 1
-
 # Disallow admin pages
 Disallow: /admin
 Disallow: /admin/dashboard
+Disallow: /admin/login
 
 # Allow important pages
 Allow: /
-Allow: /menu
-Allow: /admin/login 
+Allow: /menu 
