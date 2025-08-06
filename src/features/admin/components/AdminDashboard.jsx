@@ -56,52 +56,74 @@ function AdminDashboard() {
     console.log('📱 selectedCategory:', selectedCategory)
   }
 
+  const initializeData = async () => {
+    try {
+      console.log('🚀 initializeData BAŞLADI!')
+      console.log('📥 fetchMenuItems çağrılıyor...')
+      await fetchMenuItems()
+      console.log('📥 fetchCategories çağrılıyor...')  
+      await fetchCategories()
+      console.log('✅ initializeData TAMAMLANDI!')
+    } catch (err) {
+      console.error('❌ Initialization error:', err)
+      setError('Veri yükleme hatası: ' + err.message)
+      setIsLoading(false)
+    }
+  }
+  
   useEffect(() => {
     console.log('✨ useEffect ÇALIŞTI!')
     debugRender()
     
-    const initializeData = async () => {
-      try {
-        console.log('📥 fetchMenuItems çağrılıyor...')
-        await fetchMenuItems()
-        console.log('📥 fetchCategories çağrılıyor...')
-        await fetchCategories()
-      } catch (err) {
-        console.error('❌ Initialization error:', err)
-        setError('Veri yükleme hatası')
-        setIsLoading(false)
-      }
-    }
-    
-    initializeData()
+    // Immediate function call yerine setTimeout ile test
+    setTimeout(() => {
+      console.log('⏰ setTimeout tetiklendi, initializeData çağrılıyor...')
+      initializeData()
+    }, 100)
   }, [])
+
+  useEffect(() => {
+    document.body.style.background = '#f8fafc';
+    document.body.style.color = '#1e293b';
+    return () => {
+      document.body.style.background = '#0a0a0a';
+      document.body.style.color = '#fff';
+    };
+  }, []);
 
   const fetchMenuItems = async () => {
     console.log('🔥 fetchMenuItems FONKSIYONU ÇAĞRILDI!')
+    console.log('🔥 Current API_BASE_URL:', API_BASE_URL)
     try {
       setIsLoading(true)
       setError('') // Hata state'ini temizle
       
       const token = localStorage.getItem('adminToken')
-      console.log('🔑 Token:', token ? 'VAR' : 'YOK')
+      console.log('🔑 Token:', token ? 'VAR (' + token.substring(0,10) + '...)' : 'YOK')
       
       if (!token) {
         throw new Error('Admin token bulunamadı')
       }
       
-      console.log('📡 API çağrısı yapılıyor:', `${API_BASE_URL}/menu/admin/all`)
+      const fullUrl = `${API_BASE_URL}/menu/admin/all`
+      console.log('📡 API çağrısı yapılıyor:', fullUrl)
       
-      const response = await fetch(`${API_BASE_URL}/menu/admin/all`, {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
       
       console.log('📡 Response status:', response.status)
       console.log('📡 Response ok:', response.ok)
+      console.log('📡 Response headers:', response.headers)
       
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`)
+        const errorText = await response.text()
+        console.log('❌ Response error text:', errorText)
+        throw new Error(`HTTP Error: ${response.status} - ${response.statusText} - ${errorText}`)
       }
       
       const data = await response.json()
@@ -115,6 +137,7 @@ function AdminDashboard() {
       }
     } catch (err) {
       console.error('❌ fetchMenuItems catch error:', err)
+      console.error('❌ Error stack:', err.stack)
       setError('Menu Error: ' + err.message)
     } finally {
       console.log('🏁 fetchMenuItems finally - isLoading: false')
