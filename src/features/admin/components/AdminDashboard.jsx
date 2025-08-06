@@ -45,16 +45,7 @@ function AdminDashboard() {
     description: ''
   })
 
-  // Debug fonksiyonu ekle
-  const debugRender = () => {
-    console.log('🎯 RENDER DEBUG:')
-    console.log('📊 menuItems:', menuItems.length)
-    console.log('📂 categories:', categories.length)
-    console.log('⏳ isLoading:', isLoading)
-    console.log('❌ error:', error)
-    console.log('🔍 searchTerm:', searchTerm)
-    console.log('📱 selectedCategory:', selectedCategory)
-  }
+  // Debug fonksiyonu ve çağrıları kaldırıldı
 
   const initializeData = async () => {
     try {
@@ -73,7 +64,6 @@ function AdminDashboard() {
   
   useEffect(() => {
     console.log('✨ useEffect ÇALIŞTI!')
-    debugRender()
     
     // Immediate function call yerine setTimeout ile test
     setTimeout(() => {
@@ -330,12 +320,6 @@ function AdminDashboard() {
   }
 
   const stats = calculateStats()
-
-  // Render sırasında debug
-  console.log('🎨 RENDER EDİLİYOR!')
-  console.log('❌ ERROR STATE:', error)
-  debugRender()
-
   // Error varsa göster
   if (error) {
     return (
@@ -391,51 +375,13 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="admin-dashboard" style={{ 
-      minHeight: '100vh', 
+    <div className="admin-dashboard" style={{
+      minHeight: '100vh',
       background: 'white',
       color: 'black',
       padding: '20px',
       fontFamily: 'Arial, sans-serif'
     }}>
-      {/* DEBUG INFO - Tüm ortamlar için görünür */}
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        background: 'red', 
-        color: 'white', 
-        padding: '10px', 
-        fontSize: '14px',
-        zIndex: 9999,
-        opacity: 1,
-        border: '2px solid yellow',
-        maxWidth: '400px'
-      }}>
-        <div>ENV: {process.env.NODE_ENV}</div>
-        <div>API: {API_BASE_URL}</div>
-        <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
-        <div>Items: {menuItems.length}</div>
-        <div>Categories: {categories.length}</div>
-        <div>Error: {error ? error.substring(0,50) : 'NO'}</div>
-      </div>
-
-      {/* TEST CONTENT - Bu görünmeli */}
-      <div style={{
-        background: 'lightblue',
-        padding: '20px',
-        margin: '60px 20px 20px 20px',
-        border: '3px solid blue',
-        borderRadius: '8px'
-      }}>
-        <h1 style={{ color: 'black', fontSize: '24px', marginBottom: '10px' }}>
-          🎯 DASHBOARD TEST - Bu görünüyor mu?
-        </h1>
-        <p style={{ color: 'black', fontSize: '16px' }}>
-          Items: {menuItems.length} | Categories: {categories.length}
-        </p>
-      </div>
-
       {/* Premium Header */}
       <header className="dashboard-header">
         <div className="header-gradient"></div>
