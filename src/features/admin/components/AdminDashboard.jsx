@@ -8,18 +8,26 @@ import EditProductModal from './EditProductModal'
 import { Toast, useToast } from '../../../shared'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
-import { API_BASE_URL } from '../../../shared'
-import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
+// import { API_BASE_URL } from '../../../shared' // Bu satırı kaldır!
+// import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
 
 function AdminDashboard() {
   const navigate = useNavigate()
+  
+  // API_BASE_URL'yi burada tanımla - Production için
+  const API_BASE_URL = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
+  
+  console.log('🚀 AdminDashboard BAŞLADI!')
+  console.log('🔍 AdminDashboard - NODE_ENV:', process.env.NODE_ENV)
+  console.log('🔍 AdminDashboard - API_BASE_URL:', API_BASE_URL)
+  
   const [menuItems, setMenuItems] = useState([])
-  const [categories, setCategories] = useState([]) // Kategoriler state'i
+  const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [showCategoryForm, setShowCategoryForm] = useState(false) // Kategori formu göster/gizle
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
   const { toasts, removeToast, showSuccess, showError, showDelete } = useToast()
 
   const [editModal, setEditModal] = useState({
@@ -31,68 +39,130 @@ function AdminDashboard() {
     isOpen: false
   })
 
-  // Kategori formu state'i
   const [categoryForm, setCategoryForm] = useState({
     id: '',
     name: '',
     description: ''
   })
 
-  // Sayfa yüklendiğinde çalışır
+  // Debug fonksiyonu ekle
+  const debugRender = () => {
+    console.log('🎯 RENDER DEBUG:')
+    console.log('📊 menuItems:', menuItems.length)
+    console.log('📂 categories:', categories.length)
+    console.log('⏳ isLoading:', isLoading)
+    console.log('❌ error:', error)
+    console.log('🔍 searchTerm:', searchTerm)
+    console.log('📱 selectedCategory:', selectedCategory)
+  }
+
   useEffect(() => {
-    console.log(' AdminDashboard - NODE_ENV:', process.env.NODE_ENV)
-    console.log('🔍 AdminDashboard - API_BASE_URL:', API_BASE_URL)
-    fetchMenuItems()
-    fetchCategories() // Kategorileri de yükle
+    console.log('✨ useEffect ÇALIŞTI!')
+    debugRender()
+    
+    const initializeData = async () => {
+      try {
+        console.log('📥 fetchMenuItems çağrılıyor...')
+        await fetchMenuItems()
+        console.log('📥 fetchCategories çağrılıyor...')
+        await fetchCategories()
+      } catch (err) {
+        console.error('❌ Initialization error:', err)
+        setError('Veri yükleme hatası')
+        setIsLoading(false)
+      }
+    }
+    
+    initializeData()
   }, [])
 
-  // Backend'den menü verilerini çek
   const fetchMenuItems = async () => {
+    console.log('🔥 fetchMenuItems FONKSIYONU ÇAĞRILDI!')
     try {
       setIsLoading(true)
+      setError('') // Hata state'ini temizle
+      
       const token = localStorage.getItem('adminToken')
+      console.log('🔑 Token:', token ? 'VAR' : 'YOK')
+      
+      if (!token) {
+        throw new Error('Admin token bulunamadı')
+      }
+      
+      console.log('📡 API çağrısı yapılıyor:', `${API_BASE_URL}/menu/admin/all`)
+      
       const response = await fetch(`${API_BASE_URL}/menu/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      console.log('📡 Response status:', response.status)
+      console.log('📡 Response ok:', response.ok)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`)
+      }
+      
       const data = await response.json()
+      console.log('📡 Response data:', data)
       
       if (data.success) {
+        console.log('✅ Menu items set edildi:', data.data.length)
         setMenuItems(data.data)
       } else {
-        setError('Menü verileri yüklenemedi')
+        throw new Error(data.message || 'Menü verileri yüklenemedi')
       }
     } catch (err) {
-      setError('Bağlantı hatası')
+      console.error('❌ fetchMenuItems catch error:', err)
+      setError('Menu Error: ' + err.message)
     } finally {
+      console.log('🏁 fetchMenuItems finally - isLoading: false')
       setIsLoading(false)
     }
   }
 
-  // Backend'den kategorileri çek
   const fetchCategories = async () => {
+    console.log('🔥 fetchCategories FONKSIYONU ÇAĞRILDI!')
     try {
       const token = localStorage.getItem('adminToken')
+      console.log('🔑 Categories Token:', token ? 'VAR' : 'YOK')
+      
+      if (!token) {
+        console.log('⚠️ Token yok, categories atlanıyor')
+        return
+      }
+      
+      console.log('📡 Categories API çağrısı:', `${API_BASE_URL}/categories/admin/all`)
+      
       const response = await fetch(`${API_BASE_URL}/categories/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      console.log('📡 Categories Response status:', response.status)
+      
+      if (!response.ok) {
+        throw new Error(`Categories HTTP Error: ${response.status}`)
+      }
+      
       const data = await response.json()
+      console.log('📡 Categories Response data:', data)
       
       if (data.success) {
         setCategories(data.data)
-        console.log('✅ Kategoriler yüklendi:', data.data)
+        console.log('✅ Kategoriler yüklendi:', data.data.length)
       } else {
-        console.error('Kategoriler yüklenemedi:', data.message)
+        console.error('❌ Kategoriler yüklenemedi:', data.message)
+        // Kategoriler yüklenmezse hata vermiyoruz, sadece log atıyoruz
       }
     } catch (err) {
       console.error('❌ Kategoriler yüklenirken hata:', err)
+      // Kategoriler için hata set etmiyoruz, ana işleyiş devam etsin
     }
   }
 
-  // Kategori formu submit
   const handleCategorySubmit = async (e) => {
     e.preventDefault()
     
@@ -116,13 +186,8 @@ function AdminDashboard() {
       
       if (data.success) {
         showSuccess('Kategori başarıyla eklendi!')
-        fetchCategories() // Kategorileri yenile
-        // Formu temizle
-        setCategoryForm({
-          id: '',
-          name: '',
-          description: ''
-        })
+        fetchCategories()
+        setCategoryForm({ id: '', name: '', description: '' })
         setShowCategoryForm(false)
       } else {
         showError(data.message)
@@ -132,9 +197,7 @@ function AdminDashboard() {
     }
   }
 
-  // Kategori silme fonksiyonu
   const handleCategoryDelete = async (categoryId, categoryName) => {
-    // Onay dialog'u
     const confirmed = window.confirm(
       `"${categoryName}" kategorisini silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem geri alınamaz ve kategori içindeki TÜM ÜRÜNLER de silinecektir.\n\nDevam etmek istiyor musunuz?`
     )
@@ -154,8 +217,8 @@ function AdminDashboard() {
       
       if (data.success) {
         showDelete(`${categoryName} kategorisi ${data.data.deletedProducts > 0 ? `ve ${data.data.deletedProducts} ürün` : ''} silindi`)
-        fetchCategories() // Kategorileri yenile
-        fetchMenuItems() // Ürünleri de yenile (silinmiş olabilir)
+        fetchCategories()
+        fetchMenuItems()
       } else {
         showError(data.message)
       }
@@ -164,7 +227,6 @@ function AdminDashboard() {
     }
   }
 
-  // Menü öğesi sil
   const deleteMenuItem = async (id) => {
     const item = menuItems.find(item => item._id === id)
     if (!confirm(`"${item?.name}" ürünü silmek istediğinizden emin misiniz?`)) return
@@ -189,13 +251,11 @@ function AdminDashboard() {
     }
   }
 
-  // Çıkış yap
   const handleLogout = () => {
     localStorage.removeItem('adminToken')
     navigate('/admin')
   }
 
-  // Edit modal fonksiyonları
   const openEditModal = (product) => {
     setEditModal({ isOpen: true, product })
   }
@@ -211,7 +271,6 @@ function AdminDashboard() {
     showSuccess(`"${updatedProduct.name}" başarıyla güncellendi!`)
   }
 
-  // Add modal fonksiyonları
   const openAddModal = () => {
     setAddModal({ isOpen: true })
   }
@@ -220,13 +279,11 @@ function AdminDashboard() {
     setAddModal({ isOpen: false })
   }
 
-  // Yeni ürün ekleme fonksiyonu
   const handleProductAdd = (newProduct) => {
-    setMenuItems([newProduct, ...menuItems]) // Yeni ürün en üste ekle
+    setMenuItems([newProduct, ...menuItems])
     showSuccess(`"${newProduct.name}" başarıyla eklendi!`)
   }
 
-  // Filtrelenmiş menü öğeleri - popüler olanlar en üstte
   const filteredItems = menuItems
     .filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -234,15 +291,11 @@ function AdminDashboard() {
       return matchesSearch && matchesCategory
     })
     .sort((a, b) => {
-      // Önce popüler ürünleri sırala (popüler olanlar üstte)
       if (a.popular && !b.popular) return -1
       if (!a.popular && b.popular) return 1
-      
-      // Sonra isim alfabetik sırala
       return a.name.localeCompare(b.name, 'tr-TR')
     })
 
-  // İstatistikleri hesapla
   const calculateStats = () => {
     const totalItems = menuItems.length
     const availableItems = menuItems.filter(item => item.available).length
@@ -255,8 +308,111 @@ function AdminDashboard() {
 
   const stats = calculateStats()
 
+  // Render sırasında debug
+  console.log('🎨 RENDER EDİLİYOR!')
+  console.log('❌ ERROR STATE:', error)
+  debugRender()
+
+  // Error varsa göster
+  if (error) {
+    return (
+      <div style={{ padding: '20px', background: 'white', minHeight: '100vh' }}>
+        <h1 style={{ color: 'red' }}>HATA BULUNDU!</h1>
+        <div style={{ 
+          background: '#ffebee', 
+          border: '1px solid #f44336', 
+          padding: '15px', 
+          borderRadius: '8px',
+          marginBottom: '20px'
+        }}>
+          <h3>Hata Detayları:</h3>
+          <p><strong>Error:</strong> {error}</p>
+          <p><strong>Loading:</strong> {isLoading ? 'YES' : 'NO'}</p>
+          <p><strong>Items:</strong> {menuItems.length}</p>
+          <p><strong>Categories:</strong> {categories.length}</p>
+        </div>
+        <button 
+          onClick={() => {
+            setError('')
+            setIsLoading(true)
+            fetchMenuItems()
+            fetchCategories()
+          }}
+          style={{
+            background: '#4CAF50',
+            color: 'white',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginRight: '10px'
+          }}
+        >
+          🔄 Tekrar Dene
+        </button>
+        <button 
+          onClick={() => window.location.reload()}
+          style={{
+            background: '#2196F3',
+            color: 'white',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          🔄 Sayfayı Yenile
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard" style={{ 
+      minHeight: '100vh', 
+      background: 'white',
+      color: 'black',
+      padding: '20px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      {/* DEBUG INFO - Tüm ortamlar için görünür */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        background: 'red', 
+        color: 'white', 
+        padding: '10px', 
+        fontSize: '14px',
+        zIndex: 9999,
+        opacity: 1,
+        border: '2px solid yellow',
+        maxWidth: '400px'
+      }}>
+        <div>ENV: {process.env.NODE_ENV}</div>
+        <div>API: {API_BASE_URL}</div>
+        <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
+        <div>Items: {menuItems.length}</div>
+        <div>Categories: {categories.length}</div>
+        <div>Error: {error ? error.substring(0,50) : 'NO'}</div>
+      </div>
+
+      {/* TEST CONTENT - Bu görünmeli */}
+      <div style={{
+        background: 'lightblue',
+        padding: '20px',
+        margin: '60px 20px 20px 20px',
+        border: '3px solid blue',
+        borderRadius: '8px'
+      }}>
+        <h1 style={{ color: 'black', fontSize: '24px', marginBottom: '10px' }}>
+          🎯 DASHBOARD TEST - Bu görünüyor mu?
+        </h1>
+        <p style={{ color: 'black', fontSize: '16px' }}>
+          Items: {menuItems.length} | Categories: {categories.length}
+        </p>
+      </div>
+
       {/* Premium Header */}
       <header className="dashboard-header">
         <div className="header-gradient"></div>
@@ -552,75 +708,75 @@ function AdminDashboard() {
                   <p className="content-subtitle">{filteredItems.length} ürün gösteriliyor</p>
                 </div>
 
-                  <div className="products-grid">
-                    {filteredItems.map((item, index) => (
-                      <div 
-                        key={item._id} 
-                        className="product-card"
-                        style={{ animationDelay: `${index * 0.05}s` }}
-                      >
-                        <div className="product-image">
-                          <img 
-                            src={optimizeImageUrl(item.image, 400, 300, 'webp')} 
-                            alt={item.name}
-                            loading="lazy"
-                            width="400"
-                            height="300"
-                          />
-                          <div className="product-badges">
-                            {item.popular && (
-                              <span className="badge badge--popular">
-                                <Star size={10} />
-                                Popüler
-                              </span>
-                            )}
-                            {!item.available && (
-                              <span className="badge badge--unavailable">
-                                <EyeOff size={10} />
-                                Tükendi
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="product-info">
-                          <div className="product-header">
-                            <h4 className="product-name">{item.name}</h4>
-                            <span className="product-price">{item.price}₺</span>
-                          </div>
-                          
-                          <p className="product-description">{item.description}</p>
-                          
-                          <div className="product-meta">
-                            <span className="product-category">
-                            {categories.find(cat => cat.id === item.category)?.name || item.category}
+                <div className="products-grid">
+                  {filteredItems.map((item, index) => (
+                    <div 
+                      key={item._id} 
+                      className="product-card"
+                      style={{ animationDelay: `${index * 0.05}s` }}
+                    >
+                      <div className="product-image">
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          loading="lazy"
+                          width="400"
+                          height="300"
+                        />
+                        <div className="product-badges">
+                          {item.popular && (
+                            <span className="badge badge--popular">
+                              <Star size={10} />
+                              Popüler
                             </span>
-                            <span className="product-date">
-                              <Clock size={10} />
-                              {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                          )}
+                          {!item.available && (
+                            <span className="badge badge--unavailable">
+                              <EyeOff size={10} />
+                              Tükendi
                             </span>
-                          </div>
-
-                          <div className="product-actions">
-                            <button 
-                              className="action-btn action-btn--edit"
-                              onClick={() => openEditModal(item)}
-                            >
-                              <Edit3 size={14} />
-                              Düzenle
-                            </button>
-                            <button 
-                              className="action-btn action-btn--delete"
-                              onClick={() => deleteMenuItem(item._id)}
-                            >
-                              <Trash2 size={14} />
-                              Sil
-                            </button>
-                          </div>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="product-info">
+                        <div className="product-header">
+                          <h4 className="product-name">{item.name}</h4>
+                          <span className="product-price">{item.price}₺</span>
+                        </div>
+                        
+                        <p className="product-description">{item.description}</p>
+                        
+                        <div className="product-meta">
+                          <span className="product-category">
+                            {categories.find(cat => cat.id === item.category)?.name || item.category}
+                          </span>
+                          <span className="product-date">
+                            <Clock size={10} />
+                            {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                          </span>
+                        </div>
+
+                        <div className="product-actions">
+                          <button 
+                            className="action-btn action-btn--edit"
+                            onClick={() => openEditModal(item)}
+                          >
+                            <Edit3 size={14} />
+                            Düzenle
+                          </button>
+                          <button 
+                            className="action-btn action-btn--delete"
+                            onClick={() => deleteMenuItem(item._id)}
+                          >
+                            <Trash2 size={14} />
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </>
             ) : (
               <div className="no-results">
@@ -664,4 +820,4 @@ function AdminDashboard() {
   )
 }
 
-export default AdminDashboard 
+export default AdminDashboard
