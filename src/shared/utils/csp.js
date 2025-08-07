@@ -6,7 +6,7 @@ export const generateCSP = () => {
     'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     'font-src': ["'self'", "https://fonts.gstatic.com"],
     'img-src': ["'self'", "data:", "https:", "blob:"],
-    'connect-src': ["'self'", process.env.VITE_API_BASE_URL || "http://localhost:3001"],
+    'connect-src': ["'self'", process.env.VITE_API_BASE_URL || "http://localhost:3001", "https://api.qrmenu-cafe.vercel.app"],
     'frame-src': ["'none'"],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
