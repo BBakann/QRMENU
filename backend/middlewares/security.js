@@ -24,7 +24,7 @@ export const securityHeaders = helmet({
 // CORS security
 export const corsSecurity = (req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
-  res.header('X-Frame-Options', 'SAMEORIGIN'); // DENY yerine 
+  res.header('X-Frame-Options', 'DENY'); 
   res.header('X-XSS-Protection', '1; mode=block');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
