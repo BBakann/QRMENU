@@ -6,7 +6,7 @@ import './MenuView.css'
 
 function MenuView() {
   const navigate = useNavigate()
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,6 +17,21 @@ function MenuView() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // İlk kategoriyi otomatik seç
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      const firstCategory = categories
+        .filter(cat => {
+          const categoryItems = menuItems.filter(item => item.category === cat.id)
+          return categoryItems.length > 0
+        })[0]
+      
+      if (firstCategory) {
+        setSelectedCategory(firstCategory.id)
+      }
+    }
+  }, [categories, menuItems, selectedCategory])
 
   const fetchData = async () => {
     try {
@@ -48,26 +63,19 @@ function MenuView() {
     }
   }
 
-  // Kategorileri dinamik olarak oluştur (API'dan gelen kategoriler + "Tümü")
-  const allCategories = [
-    { 
-      id: 'all', 
-      name: 'Tümü', 
-      count: menuItems.length,
-      backgroundImage: menuItems.length > 0 ? menuItems[0].image : null
-    },
-    ...categories
-      .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR')) // Alfabetik sıralama
-      .map(cat => {
-        const categoryItems = menuItems.filter(item => item.category === cat.id)
-        return {
-          id: cat.id,
-          name: cat.name,
-          count: categoryItems.length,
-          backgroundImage: categoryItems.length > 0 ? categoryItems[0].image : null
-        }
-      })
-  ]
+  // Kategorileri dinamik olarak oluştur (sadece API'dan gelen kategoriler)
+  const allCategories = categories
+    .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR')) // Alfabetik sıralama
+    .map(cat => {
+      const categoryItems = menuItems.filter(item => item.category === cat.id)
+      return {
+        id: cat.id,
+        name: cat.name,
+        count: categoryItems.length,
+        backgroundImage: categoryItems.length > 0 ? categoryItems[0].image : null
+      }
+    })
+    .filter(cat => cat.count > 0); // Sadece ürünü olan kategorileri göster
 
   // Kategori seçimi ve scroll
   const handleCategorySelect = (categoryId) => {
@@ -83,9 +91,9 @@ function MenuView() {
   }
 
   // Filtrelenmiş ürünler
-  const filteredItems = selectedCategory === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.category === selectedCategory)
+  const filteredItems = selectedCategory 
+    ? menuItems.filter(item => item.category === selectedCategory)
+    : []
 
   if (loading) {
     return (
@@ -172,7 +180,7 @@ function MenuView() {
         <div className="section-info">
           <div className="section-header">
             <h3 className="section-title">
-              {selectedCategory === 'all' ? 'Tüm Menü' : allCategories.find(c => c.id === selectedCategory)?.name}
+              {allCategories.find(c => c.id === selectedCategory)?.name || 'Menü'}
             </h3>
           </div>
           <div className="item-count">

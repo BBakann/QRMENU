@@ -26,7 +26,7 @@ function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const { toasts, removeToast, showSuccess, showError, showDelete } = useToast()
 
@@ -71,6 +71,9 @@ function AdminDashboard() {
       initializeData()
     }, 100)
   }, [])
+
+  // İlk kategoriyi otomatik seçme - manuel seçime bırak
+  // useEffect kaldırıldı, kullanıcı manuel olarak kategori seçecek
 
   useEffect(() => {
     document.body.style.background = '#f8fafc';
@@ -297,10 +300,10 @@ function AdminDashboard() {
     showSuccess(`"${newProduct.name}" başarıyla eklendi!`)
   }
 
-  const filteredItems = menuItems
+  const filteredItems = selectedCategory === '' ? [] : menuItems
     .filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory
+      const matchesCategory = item.category === selectedCategory
       return matchesSearch && matchesCategory
     })
     .sort((a, b) => {
@@ -421,83 +424,42 @@ function AdminDashboard() {
         </div>
       </header>
 
-      {/* Premium Stats Cards */}
+      {/* Kompakt Stats */}
       <section className="dashboard-stats">
-        <div className="stats-container">
-          <div className="stat-card stat-card--primary">
-            <div className="stat-background"></div>
-            <div className="stat-icon">
-              <Package size={24} />
-            </div>
-            <div className="stat-content">
-              <h3 className="stat-number">{stats.totalItems}</h3>
-              <p className="stat-label">Toplam Ürün</p>
-              <div className="stat-progress">
-                <div className="progress-bar" style={{width: '100%'}}></div>
-              </div>
-            </div>
+        <div className="stats-compact">
+          <div className="stat-item">
+            <Package size={16} />
+            <span className="stat-value">{stats.totalItems}</span>
+            <span className="stat-name">Ürün</span>
           </div>
-
-          <div className="stat-card stat-card--success">
-            <div className="stat-background"></div>
-            <div className="stat-icon">
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-content">
-              <h3 className="stat-number">{stats.totalValue.toFixed(0)}₺</h3>
-              <p className="stat-label">Toplam Değer</p>
-              <div className="stat-progress">
-                <div className="progress-bar" style={{width: '85%'}}></div>
-              </div>
-            </div>
+          <div className="stat-item">
+            <DollarSign size={16} />
+            <span className="stat-value">{stats.totalValue.toFixed(0)}₺</span>
+            <span className="stat-name">Toplam</span>
           </div>
-
-          <div className="stat-card stat-card--info">
-            <div className="stat-background"></div>
-            <div className="stat-icon">
-              <TrendingUp size={24} />
-            </div>
-            <div className="stat-content">
-              <h3 className="stat-number">{stats.avgPrice.toFixed(0)}₺</h3>
-              <p className="stat-label">Ortalama Fiyat</p>
-              <div className="stat-progress">
-                <div className="progress-bar" style={{width: '70%'}}></div>
-              </div>
-            </div>
+          <div className="stat-item">
+            <TrendingUp size={16} />
+            <span className="stat-value">{stats.avgPrice.toFixed(0)}₺</span>
+            <span className="stat-name">Ort.</span>
           </div>
-
-          <div className="stat-card stat-card--warning">
-            <div className="stat-background"></div>
-            <div className="stat-icon">
-              <Star size={24} />
-            </div>
-            <div className="stat-content">
-              <h3 className="stat-number">{stats.popularItems}</h3>
-              <p className="stat-label">Popüler Ürün</p>
-              <div className="stat-progress">
-                <div className="progress-bar" style={{width: `${(stats.popularItems / (stats.totalItems || 1)) * 100}%`}}></div>
-              </div>
-            </div>
+          <div className="stat-item">
+            <Star size={16} />
+            <span className="stat-value">{stats.popularItems}</span>
+            <span className="stat-name">Popüler</span>
           </div>
         </div>
       </section>
 
-      {/* Kategori Yönetimi */}
-      <section className="category-management">
-        <div className="category-header">
-          <div className="category-title">
-            <Tag size={20} />
-            <h2>Kategori Yönetimi</h2>
-            <span className="category-count">{categories.length} kategori</span>
-          </div>
+      {/* Kompakt Kategori Yönetimi */}
+      <section className="category-section">
+        <div className="section-header">
+          <h3>Kategoriler ({categories.length})</h3>
           <button 
-            className="add-category-btn"
+            className="toggle-btn"
             onClick={() => setShowCategoryForm(!showCategoryForm)}
-            aria-label="Kategori ekle"
-            title="Kategori ekle"
+            title={showCategoryForm ? "Formu kapat" : "Kategori ekle"}
           >
-            <Plus size={16} />
-            <span>Kategori Ekle</span>
+            <Plus size={16} style={{transform: showCategoryForm ? 'rotate(45deg)' : 'none'}} />
           </button>
         </div>
 
@@ -561,96 +523,69 @@ function AdminDashboard() {
           </div>
         )}
 
-        {/* Kategoriler Listesi */}
-        <div className="categories-list">
+        {/* Kompakt Kategoriler */}
+        <div className="categories-compact">
           {categories.length > 0 ? (
-            <div className="categories-grid">
+            <div className="category-pills">
               {categories.map((category) => (
-                <div key={category.id} className="category-card">
-                  <div className="category-info">
-                    <h4>{category.name}</h4>
-                    <span className="category-id">#{category.id}</span>
-                    {category.description && (
-                      <p className="category-description">{category.description}</p>
-                    )}
-                  </div>
-                  <div className="category-status">
-                    <span className={`status ${category.active !== false ? 'active' : 'inactive'}`}>
-                      {category.active !== false ? 'Aktif' : 'Pasif'}
-                    </span>
-                  </div>
-                  <div className="category-actions">
-                    <button 
-                      className="action-btn action-btn--delete"
-                      onClick={() => handleCategoryDelete(category.id, category.name)}
-                      aria-label={`${category.name} kategorisini sil`}
-                      title={`${category.name} kategorisini sil`}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                <div key={category.id} className="category-pill">
+                  <span className="pill-name">{category.name}</span>
+                  <button 
+                    className="pill-delete"
+                    onClick={() => handleCategoryDelete(category.id, category.name)}
+                    title={`${category.name} sil`}
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="no-categories">
-              <Tag size={40} />
-              <p>Henüz kategori bulunmuyor. Mevcut kategoriler otomatik eklenecek!</p>
+            <div className="no-data">
+              <span>Kategori yok</span>
             </div>
           )}
         </div>
       </section>
 
-      {/* Premium Controls */}
+      {/* Kompakt Controls */}
       <section className="dashboard-controls">
-        <div className="controls-container">
-          <div className="controls-left">
-            <div className="search-container">
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Ürün ara..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-
-            <div className="filter-container">
-              <Filter size={18} className="filter-icon" />
-              <label htmlFor="category-filter" className="sr-only">Kategori seçin</label>
-              <select
-                id="category-filter"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="filter-select"
-                aria-label="Kategori filtrele"
-              >
-                <option value="all">Tüm Kategoriler</option>
-                {categories
-                  .filter(cat => cat.active !== false)
-                  .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR'))
-                  .map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))
-                }
-              </select>
-            </div>
+        <div className="controls-grid">
+          <div className="search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Ürün ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
-          <div className="controls-right">
-            <button 
-              className="add-btn" 
-              onClick={openAddModal}
-              aria-label="Yeni ürün ekle"
-              title="Yeni ürün ekle"
-            >
-              <Plus size={18} />
-              <span>Yeni Ürün</span>
-            </button>
-          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className={`filter-select ${selectedCategory ? 'active' : ''}`}
+          >
+            <option value="">Kategori Seç</option>
+            {categories
+              .filter(cat => cat.active !== false)
+              .sort((a, b) => a.name.localeCompare(b.name, 'tr-TR'))
+              .map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))
+            }
+          </select>
+
+          <button 
+            className="add-product-btn" 
+            onClick={openAddModal}
+            title="Yeni ürün ekle"
+          >
+            <Plus size={16} />
+            <span>Ekle</span>
+          </button>
         </div>
       </section>
 

@@ -31,12 +31,22 @@ const pageVariants = {
 
 const pageTransition = {
   type: "tween",
-  ease: "anticipate",
-  duration: 0.4 // daha kısa tut
+  ease: "easeInOut",
+  duration: 1 // Daha uzun transition
 }
 
 function AnimatedRoute({ children }) {
-  return <div>{children}</div>
+  return (
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+    >
+      {children}
+    </motion.div>
+  )
 }
 
 function App() {
