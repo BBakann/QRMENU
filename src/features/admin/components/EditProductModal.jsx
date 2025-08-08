@@ -82,12 +82,12 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
     setError('')
 
     try {
-      const token = localStorage.getItem('adminToken')
+      // Token artık cookie'den otomatik gönderilecek
       const response = await fetch(`${API_BASE_URL}/menu/${product._id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           ...formData,

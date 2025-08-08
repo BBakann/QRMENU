@@ -24,23 +24,23 @@ export const verifyToken = (token) => {
   }
 };
 
-// Admin middleware - token kontrolü
+// Admin middleware - token kontrolü (cookie'den)
 export const authenticateAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // Önce cookie'den token'ı kontrol et
+  let token = req.cookies?.adminToken;
   
-  if (!authHeader) {
-    return res.status(401).json({
-      success: false,
-      message: 'Token gerekli!'
-    });
+  // Eğer cookie'de yoksa Authorization header'dan kontrol et (geriye uyumluluk için)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      token = authHeader.split(' ')[1];
+    }
   }
-  
-  const token = authHeader.split(' ')[1];
   
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Token formatı yanlış!'
+      message: 'Token gerekli!'
     });
   }
   

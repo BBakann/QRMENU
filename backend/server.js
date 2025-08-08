@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import config from './config/config.js';
 import { connectDatabase } from './db/index.js';
 import { createCorsMiddleware } from './helpers/index.js';
@@ -38,6 +38,7 @@ app.use(generalRateLimit);
 app.use(sessionProtection);
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);

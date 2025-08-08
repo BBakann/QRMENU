@@ -91,20 +91,13 @@ function AdminDashboard() {
       setIsLoading(true)
       setError('') // Hata state'ini temizle
       
-      const token = localStorage.getItem('adminToken')
-      console.log('🔑 Token:', token ? 'VAR (' + token.substring(0,10) + '...)' : 'YOK')
-      
-      if (!token) {
-        throw new Error('Admin token bulunamadı')
-      }
-      
       const fullUrl = `${API_BASE_URL}/menu/admin/all`
       console.log('📡 API çağrısı yapılıyor:', fullUrl)
       
       const response = await fetch(fullUrl, {
         method: 'GET',
+        credentials: 'include', // Cookie auth
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
@@ -141,20 +134,10 @@ function AdminDashboard() {
   const fetchCategories = async () => {
     console.log('🔥 fetchCategories FONKSIYONU ÇAĞRILDI!')
     try {
-      const token = localStorage.getItem('adminToken')
-      console.log('🔑 Categories Token:', token ? 'VAR' : 'YOK')
-      
-      if (!token) {
-        console.log('⚠️ Token yok, categories atlanıyor')
-        return
-      }
-      
       console.log('📡 Categories API çağrısı:', `${API_BASE_URL}/categories/admin/all`)
       
       const response = await fetch(`${API_BASE_URL}/categories/admin/all`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include' // Cookie auth
       })
       
       console.log('📡 Categories Response status:', response.status)
@@ -188,12 +171,11 @@ function AdminDashboard() {
     }
 
     try {
-      const token = localStorage.getItem('adminToken')
       const response = await fetch(`${API_BASE_URL}/categories`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(categoryForm)
       })
@@ -221,12 +203,9 @@ function AdminDashboard() {
     if (!confirmed) return
 
     try {
-      const token = localStorage.getItem('adminToken')
       const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       })
       
       const data = await response.json()
@@ -248,12 +227,9 @@ function AdminDashboard() {
     if (!confirm(`"${item?.name}" ürünü silmek istediğinizden emin misiniz?`)) return
     
     try {
-      const token = localStorage.getItem('adminToken')
       const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       })
       
       if (response.ok) {
@@ -267,9 +243,25 @@ function AdminDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken')
-    navigate('/admin')
+  const handleLogout = async () => {
+    try {
+      // Backend'e logout isteği gönder
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Tüm potansiyel token'ları temizle (güvenlik için)
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('isAdmin')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('userToken')
+      // Her durumda admin sayfasına yönlendir
+      navigate('/admin')
+    }
   }
 
   const openEditModal = (product) => {

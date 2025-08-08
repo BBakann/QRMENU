@@ -45,6 +45,7 @@ function AdminLogin() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
+        credentials: 'include', // Cookie'leri gönder ve al
         headers: addCSRFToken({
           'Content-Type': 'application/json',
         }),
@@ -54,8 +55,7 @@ function AdminLogin() {
       const data = await response.json()
 
       if (data.success) {
-        // Token'ı localStorage'a kaydet
-        localStorage.setItem('adminToken', data.token)
+        // Token artık httpOnly cookie olarak set ediliyor, manuel bir şey yapmamıza gerek yok
         navigate('/admin/dashboard')
       } else {
         setError(data.message)

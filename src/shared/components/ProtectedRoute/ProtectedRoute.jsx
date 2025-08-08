@@ -11,22 +11,12 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        const token = localStorage.getItem('adminToken')
-        console.log('🔍 ProtectedRoute - Token:', token ? 'Var' : 'Yok')
-        
-        if (!token) {
-          console.log('❌ Token yok, admin sayfasına yönlendiriliyor')
-          navigate('/admin')
-          return
-        }
-
+        console.log('🔍 ProtectedRoute - Cookie-based auth kontrolü başlıyor')
         console.log('🔍 ProtectedRoute - API URL:', `${API_BASE_URL}/auth/verify`)
         
-        // Token'ı backend'de doğrula
+        // Token artık cookie'den otomatik gelecek
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include' // Cookie'leri gönder
         })
 
         console.log('🔍 ProtectedRoute - Response status:', response.status)
@@ -37,13 +27,11 @@ const ProtectedRoute = ({ children }) => {
           console.log('✅ Auth başarılı, dashboard yükleniyor')
           setIsAuthenticated(true)
         } else {
-          console.log('❌ Auth başarısız, token siliniyor')
-          localStorage.removeItem('adminToken')
+          console.log('❌ Auth başarısız, admin sayfasına yönlendiriliyor')
           navigate('/admin')
         }
       } catch (error) {
         console.error('💥 Auth verification error:', error)
-        localStorage.removeItem('adminToken')
         navigate('/admin')
       } finally {
         setIsLoading(false)

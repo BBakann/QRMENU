@@ -35,12 +35,10 @@ const ImageUpload = ({ onImageUpload, currentImage = null, className = '' }) => 
       const formData = new FormData()
       formData.append('image', file)
 
-      const token = localStorage.getItem('adminToken')
+      // Token artık cookie'den otomatik gönderilecek
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        credentials: 'include',
         body: formData
       })
 

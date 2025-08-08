@@ -47,10 +47,18 @@ export const adminLogin = async (req, res) => {
         
         console.log(`✅ Admin ${username} başarıyla giriş yaptı`);
         
+        // Token'ı httpOnly cookie olarak set et
+        res.cookie('adminToken', token, {
+            httpOnly: true,           // JavaScript'ten erişilemesin
+            secure: process.env.NODE_ENV === 'production', // Production'da sadece HTTPS
+            sameSite: 'strict',       // CSRF koruması
+            maxAge: 24 * 60 * 60 * 1000, // 24 saat
+            path: '/'                 // Tüm path'lerde geçerli
+        });
+        
         res.json({ 
             success: true, 
             message: 'Giriş başarılı!',
-            token: token,
             user: {
                 id: ADMIN_USER.id,
                 username: ADMIN_USER.username,
@@ -64,6 +72,31 @@ export const adminLogin = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Sunucu hatası'
+        });
+    }
+};
+
+// Admin çıkış işlemi
+export const adminLogout = async (req, res) => {
+    try {
+        // adminToken çerezini temizle
+        res.clearCookie('adminToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+        
+        res.json({
+            success: true,
+            message: 'Başarıyla çıkış yapıldı!'
+        });
+        
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Çıkış yapılırken hata oluştu!'
         });
     }
 };
@@ -121,11 +154,4 @@ export const changePassword = async (req, res) => {
     }
 };
 
-// Admin logout
-export const adminLogout = (req, res) => {
-    console.log(`👋 Admin ${req.user.username} çıkış yaptı`);
-    res.json({
-        success: true,
-        message: 'Çıkış başarılı'
-    });
-}; 
+ 
