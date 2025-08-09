@@ -1,5 +1,94 @@
 import { body, validationResult } from 'express-validator';
 
+// NoSQL Injection koruması
+export const preventNoSQLInjection = (req, res, next) => {
+  const checkForInjection = (obj, path = '') => {
+    if (obj === null || obj === undefined) return false;
+    
+    if (typeof obj === 'object') {
+      // MongoDB operatörlerini tespit et
+      const mongoOperators = ['$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$regex', '$where', '$exists', '$all'];
+      
+      for (const key in obj) {
+        if (mongoOperators.includes(key)) {
+          console.warn(`🚨 NoSQL injection attempt detected! Path: ${path}.${key}, Value:`, obj[key]);
+          return true;
+        }
+        
+        if (checkForInjection(obj[key], `${path}.${key}`)) {
+          return true;
+        }
+      }
+    }
+    
+    if (typeof obj === 'string') {
+      // String içinde MongoDB operatörleri arama
+      const suspiciousPatterns = [/\$ne/, /\$gt/, /\$lt/, /\$regex/, /\$where/];
+      return suspiciousPatterns.some(pattern => pattern.test(obj));
+    }
+    
+    return false;
+  };
+
+  // Request body'yi kontrol et
+  if (req.body && checkForInjection(req.body)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Geçersiz istek formatı tespit edildi',
+      error: 'SECURITY_VIOLATION'
+    });
+  }
+
+  // Query parameters'ı kontrol et
+  if (req.query && checkForInjection(req.query)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Geçersiz query parametresi tespit edildi',
+      error: 'SECURITY_VIOLATION'
+    });
+  }
+
+  next();
+};
+
+// Input type validation
+export const validateInputTypes = (req, res, next) => {
+  const validateType = (obj, expectedTypes) => {
+    for (const [key, expectedType] of Object.entries(expectedTypes)) {
+      if (obj[key] !== undefined) {
+        if (expectedType === 'string' && typeof obj[key] !== 'string') {
+          return `${key} field must be a string`;
+        }
+        if (expectedType === 'number' && typeof obj[key] !== 'number') {
+          return `${key} field must be a number`;
+        }
+        if (expectedType === 'boolean' && typeof obj[key] !== 'boolean') {
+          return `${key} field must be a boolean`;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Login endpoint için özel validation
+  if (req.path === '/login' && req.method === 'POST') {
+    const error = validateType(req.body, {
+      username: 'string',
+      password: 'string'
+    });
+    
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+        error: 'TYPE_VALIDATION_ERROR'
+      });
+    }
+  }
+
+  next();
+};
+
 // Validation sonuçlarını kontrol eden middleware
 export const validateRequest = (req, res, next) => {
   const errors = validationResult(req);

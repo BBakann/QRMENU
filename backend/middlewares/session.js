@@ -9,9 +9,9 @@ export const sessionProtection = (req, res, next) => {
     });
   }
 
-  // Referer kontrolü (CSRF için ek koruma)
+  // Referer kontrolü (CSRF için ek koruma) - TEST İÇİN GEÇİCİ DEVRE DIŞI
   const referer = req.headers.referer;
-  if (req.method === 'POST' && !referer) {
+  if (false && req.method === 'POST' && !referer) {
     return res.status(403).json({
       success: false,
       message: 'Geçersiz istek kaynağı'

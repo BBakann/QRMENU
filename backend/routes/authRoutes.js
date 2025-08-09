@@ -1,8 +1,8 @@
 import express from 'express';
 import { requireAdmin } from '../middlewares/auth.js';
 import { authRateLimit } from '../middlewares/rateLimit.js';
-import { validateLogin, validatePasswordChange } from '../middlewares/validation.js';
-import { csrfProtection } from '../middlewares/csrf.js';
+import { validateLogin, validatePasswordChange, preventNoSQLInjection, validateInputTypes } from '../middlewares/validation.js';
+import { csrfProtection, getCsrfToken } from '../middlewares/csrf.js';
 import {
     adminLogin,
     getAdminProfile,
@@ -13,8 +13,19 @@ import {
 
 const router = express.Router();
 
-// PUBLIC ROUTES
-router.post('/login', authRateLimit, csrfProtection, validateLogin, adminLogin);
+// PUBLIC ROUTES - GÜVENLİK KATMANLARI EKLENDİ
+
+// CSRF token endpoint (ilk olarak token almak için)
+router.get('/csrf-token', getCsrfToken);
+
+router.post('/login', 
+  authRateLimit,           // Rate limiting
+  preventNoSQLInjection,   // NoSQL injection koruması
+  validateInputTypes,      // Type validation
+  validateLogin,           // Input validation
+  csrfProtection,          // CSRF koruması
+  adminLogin               // Login handler
+);
 
 // ADMIN ROUTES
 router.get('/profile', requireAdmin, getAdminProfile);

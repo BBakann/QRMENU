@@ -15,7 +15,17 @@ const ADMIN_USER = {
 export const adminLogin = async (req, res) => {
     const { username, password } = req.body;
     
-    console.log('Admin login attempt for user:', username);
+    // Ekstra güvenlik kontrolü: Input type validation
+    if (typeof username !== 'string' || typeof password !== 'string') {
+        // Production'da sadece critical güvenlik logları
+        if (process.env.NODE_ENV === 'production') {
+            console.warn(`Security: Invalid input types from IP: ${req.ip}`);
+        }
+        return res.status(400).json({
+            success: false,
+            message: 'Geçersiz giriş bilgileri formatı'
+        });
+    }
     
     try {
         // Kullanıcı adı kontrolü
@@ -30,7 +40,10 @@ export const adminLogin = async (req, res) => {
         const isPasswordValid = await comparePassword(password, ADMIN_USER.password);
         
         if (!isPasswordValid) {
-            console.log('Failed login attempt - wrong password');
+            // Failed login sadece production'da log
+            if (process.env.NODE_ENV === 'production') {
+                console.warn(`Security: Failed login attempt for ${username} from ${req.ip}`);
+            }
             return res.status(401).json({ 
                 success: false, 
                 message: 'Kullanıcı adı veya şifre yanlış!' 
@@ -45,15 +58,18 @@ export const adminLogin = async (req, res) => {
             role: ADMIN_USER.role
         });
         
-        console.log(`✅ Admin ${username} başarıyla giriş yaptı`);
+        // Success login - production'da log
+        if (process.env.NODE_ENV === 'production') {
+            console.log(`Admin login successful: ${username} from ${req.ip}`);
+        }
         
-        // Token'ı httpOnly cookie olarak set et
+        // Token'ı SESSION COOKIE olarak set et
         res.cookie('adminToken', token, {
-            httpOnly: true,           // JavaScript'ten erişilemesin
-            secure: process.env.NODE_ENV === 'production', // Production'da sadece HTTPS
+            httpOnly: true,           // XSS koruması
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
             sameSite: 'strict',       // CSRF koruması
-            maxAge: 24 * 60 * 60 * 1000, // 24 saat
-            path: '/'                 // Tüm path'lerde geçerli
+            // maxAge KALDIRILDI = tarayıcı kapanınca silinir
+            path: '/'
         });
         
         res.json({ 
@@ -76,15 +92,27 @@ export const adminLogin = async (req, res) => {
     }
 };
 
-// Admin çıkış işlemi
+// Admin çıkış işlemi - GÜÇLENDİRİLMİŞ
 export const adminLogout = async (req, res) => {
     try {
-        // adminToken çerezini temizle
+        // adminToken çerezini tamamen temizle - MULTIPLE METHODS
         res.clearCookie('adminToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/'
+        });
+        
+        // Ek temizlik - farklı path'ler için
+        res.clearCookie('adminToken');
+        
+        // Expired cookie set et (extra güvenlik)
+        res.cookie('adminToken', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            expires: new Date(0) // Geçmişte bir tarih = hemen sil
         });
         
         res.json({

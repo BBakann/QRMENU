@@ -43,12 +43,15 @@ function AdminLogin() {
     }
 
     try {
+      // CSRF token'ı async olarak al
+      const headers = await addCSRFToken({
+        'Content-Type': 'application/json',
+      });
+      
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         credentials: 'include', // Cookie'leri gönder ve al
-        headers: addCSRFToken({
-          'Content-Type': 'application/json',
-        }),
+        headers,
         body: JSON.stringify(formData)
       })
 

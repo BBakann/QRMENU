@@ -8,18 +8,15 @@ import EditProductModal from './EditProductModal'
 import { Toast, useToast } from '../../../shared'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
-// import { API_BASE_URL } from '../../../shared' // Bu satırı kaldır!
-// import { optimizeImageUrl } from '../../../shared/utils/imageOptimization'
+import { getCSRFToken, addCSRFToken, clearCSRFToken } from '../../../shared/utils/csrf'
 
 function AdminDashboard() {
   const navigate = useNavigate()
   
-  // API_BASE_URL'yi burada tanımla - Production için
+  
   const API_BASE_URL = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
   
-  console.log('🚀 AdminDashboard BAŞLADI!')
-  console.log('🔍 AdminDashboard - NODE_ENV:', process.env.NODE_ENV)
-  console.log('🔍 AdminDashboard - API_BASE_URL:', API_BASE_URL)
+ 
   
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState([])
@@ -49,25 +46,25 @@ function AdminDashboard() {
 
   const initializeData = async () => {
     try {
-      console.log('🚀 initializeData BAŞLADI!')
-      console.log('📥 fetchMenuItems çağrılıyor...')
+      // console.log('🚀 initializeData BAŞLADI!')
+      // console.log('📥 fetchMenuItems çağrılıyor...')
       await fetchMenuItems()
-      console.log('📥 fetchCategories çağrılıyor...')  
+      // console.log('📥 fetchCategories çağrılıyor...')  
       await fetchCategories()
-      console.log('✅ initializeData TAMAMLANDI!')
+      // console.log('✅ initializeData TAMAMLANDI!')
     } catch (err) {
-      console.error('❌ Initialization error:', err)
+      // console.error('❌ Initialization error:', err)
       setError('Veri yükleme hatası: ' + err.message)
       setIsLoading(false)
     }
   }
   
   useEffect(() => {
-    console.log('✨ useEffect ÇALIŞTI!')
+    // console.log('✨ useEffect ÇALIŞTI!')
     
     // Immediate function call yerine setTimeout ile test
     setTimeout(() => {
-      console.log('⏰ setTimeout tetiklendi, initializeData çağrılıyor...')
+      // console.log('⏰ setTimeout tetiklendi, initializeData çağrılıyor...')
       initializeData()
     }, 100)
   }, [])
@@ -85,14 +82,14 @@ function AdminDashboard() {
   }, []);
 
   const fetchMenuItems = async () => {
-    console.log('🔥 fetchMenuItems FONKSIYONU ÇAĞRILDI!')
-    console.log('🔥 Current API_BASE_URL:', API_BASE_URL)
+    // console.log('🔥 fetchMenuItems FONKSIYONU ÇAĞRILDI!')
+    // console.log('🔥 Current API_BASE_URL:', API_BASE_URL)
     try {
       setIsLoading(true)
       setError('') // Hata state'ini temizle
       
       const fullUrl = `${API_BASE_URL}/menu/admin/all`
-      console.log('📡 API çağrısı yapılıyor:', fullUrl)
+      // console.log('📡 API çağrısı yapılıyor:', fullUrl)
       
       const response = await fetch(fullUrl, {
         method: 'GET',
@@ -102,62 +99,62 @@ function AdminDashboard() {
         }
       })
       
-      console.log('📡 Response status:', response.status)
-      console.log('📡 Response ok:', response.ok)
-      console.log('📡 Response headers:', response.headers)
+      // console.log('📡 Response status:', response.status)
+      // console.log('📡 Response ok:', response.ok)
+      // console.log('📡 Response headers:', response.headers)
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.log('❌ Response error text:', errorText)
+        // console.log('❌ Response error text:', errorText)
         throw new Error(`HTTP Error: ${response.status} - ${response.statusText} - ${errorText}`)
       }
       
       const data = await response.json()
-      console.log('📡 Response data:', data)
+      // console.log('📡 Response data:', data)
       
       if (data.success) {
-        console.log('✅ Menu items set edildi:', data.data.length)
+        // console.log('✅ Menu items set edildi:', data.data.length)
         setMenuItems(data.data)
       } else {
         throw new Error(data.message || 'Menü verileri yüklenemedi')
       }
     } catch (err) {
-      console.error('❌ fetchMenuItems catch error:', err)
-      console.error('❌ Error stack:', err.stack)
+      // console.error('❌ fetchMenuItems catch error:', err)
+      // console.error('❌ Error stack:', err.stack)
       setError('Menu Error: ' + err.message)
     } finally {
-      console.log('🏁 fetchMenuItems finally - isLoading: false')
+      // console.log('🏁 fetchMenuItems finally - isLoading: false')
       setIsLoading(false)
     }
   }
 
   const fetchCategories = async () => {
-    console.log('🔥 fetchCategories FONKSIYONU ÇAĞRILDI!')
+    // console.log('🔥 fetchCategories FONKSIYONU ÇAĞRILDI!')
     try {
-      console.log('📡 Categories API çağrısı:', `${API_BASE_URL}/categories/admin/all`)
+      // console.log('📡 Categories API çağrısı:', `${API_BASE_URL}/categories/admin/all`)
       
       const response = await fetch(`${API_BASE_URL}/categories/admin/all`, {
         credentials: 'include' // Cookie auth
       })
       
-      console.log('📡 Categories Response status:', response.status)
+      // console.log('📡 Categories Response status:', response.status)
       
       if (!response.ok) {
         throw new Error(`Categories HTTP Error: ${response.status}`)
       }
       
       const data = await response.json()
-      console.log('📡 Categories Response data:', data)
+      // console.log('📡 Categories Response data:', data)
       
       if (data.success) {
         setCategories(data.data)
-        console.log('✅ Kategoriler yüklendi:', data.data.length)
+        // console.log('✅ Kategoriler yüklendi:', data.data.length)
       } else {
-        console.error('❌ Kategoriler yüklenemedi:', data.message)
+        // console.error('❌ Kategoriler yüklenemedi:', data.message)
         // Kategoriler yüklenmezse hata vermiyoruz, sadece log atıyoruz
       }
     } catch (err) {
-      console.error('❌ Kategoriler yüklenirken hata:', err)
+      // console.error('❌ Kategoriler yüklenirken hata:', err)
       // Kategoriler için hata set etmiyoruz, ana işleyiş devam etsin
     }
   }
@@ -251,7 +248,7 @@ function AdminDashboard() {
         credentials: 'include'
       })
     } catch (error) {
-      console.error('Logout error:', error)
+      // console.error('Logout error:', error)
     } finally {
       // Tüm potansiyel token'ları temizle (güvenlik için)
       localStorage.removeItem('adminToken')
@@ -259,6 +256,10 @@ function AdminDashboard() {
       localStorage.removeItem('isAdmin')
       localStorage.removeItem('authToken')
       localStorage.removeItem('userToken')
+      
+      // CSRF token'ı da temizle
+      clearCSRFToken()
+      
       // Her durumda admin sayfasına yönlendir
       navigate('/admin')
     }
