@@ -41,7 +41,7 @@
     "multer": "^2.0.2"
   },
   "devDependencies": {
-    "eslint": "^9.21.0",
+    "eslint": "^9.33.0",
     "nodemon": "^3.1.4"
   }
 }
