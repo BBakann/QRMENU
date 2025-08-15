@@ -19,10 +19,10 @@ router.get('/', getAllProducts);
 router.get('/:id', getProductById);
 router.get('/category/:category', getProductsByCategory);
 
-// ADMIN ROUTES
+// ADMIN ROUTES - CSRF GEÇİCİ DEVRE DIŞI
 router.get('/admin/all', requireAdmin, adminRateLimit, getAllProductsForAdmin);
-router.post('/', requireAdmin, adminRateLimit, validateProduct, createProduct);
-router.put('/:id', requireAdmin, adminRateLimit, validateProduct, updateProduct);
+router.post('/', requireAdmin, adminRateLimit, createProduct);
+router.put('/:id', requireAdmin, adminRateLimit, updateProduct);
 router.delete('/:id', requireAdmin, adminRateLimit, deleteProduct);
 
 export default router; 

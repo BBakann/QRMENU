@@ -8,7 +8,7 @@ import EditProductModal from './EditProductModal'
 import { Toast, useToast } from '../../../shared'
 import './AdminDashboard.css'
 import AddProductModal from './AddProductModal'
-import { getCSRFToken, addCSRFToken, clearCSRFToken } from '../../../shared/utils/csrf'
+// import { addCSRFToken } from '../../../shared/utils/csrf' // CSRF kaldırıldı
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -202,7 +202,10 @@ function AdminDashboard() {
     try {
       const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
       
       const data = await response.json()
@@ -226,7 +229,10 @@ function AdminDashboard() {
     try {
       const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
       
       if (response.ok) {
@@ -237,6 +243,88 @@ function AdminDashboard() {
       }
     } catch (err) {
       showError('Bağlantı hatası! Silme işlemi başarısız.')
+    }
+  }
+
+  // Belirli ürünleri sil (ID ile)
+  const deleteProductsByNames = async (productNames) => {
+    const productsToDelete = menuItems.filter(item => 
+      productNames.includes(item.name)
+    )
+    
+    if (productsToDelete.length === 0) {
+      showError('Silinecek ürün bulunamadı!')
+      return
+    }
+    
+    const confirmMessage = `${productsToDelete.length} adet ürün silinecek:\n\n${productsToDelete.map(item => `• ${item.name} (ID: ${item._id})`).join('\n')}\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?`
+    
+    if (!confirm(confirmMessage)) return
+    
+    try {
+      let deletedCount = 0
+      const headers = await addCSRFToken()
+      
+      for (const item of productsToDelete) {
+        console.log(`🗑️ Siliniyor: ${item.name} (ID: ${item._id})`)
+        const response = await fetch(`${API_BASE_URL}/menu/${item._id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: headers
+        })
+        
+        if (response.ok) {
+          deletedCount++
+          console.log(`✅ Silindi: ${item.name}`)
+        } else {
+          console.log(`❌ Silinemedi: ${item.name}`)
+        }
+      }
+      
+      // State'i güncelle
+      setMenuItems(menuItems.filter(item => !productNames.includes(item.name)))
+      showDelete(`${deletedCount} gereksiz ürün başarıyla silindi!`)
+      
+    } catch (err) {
+      showError('Toplu silme işleminde hata oluştu!')
+    }
+  }
+
+  // Pasif ürünleri toplu sil
+  const deleteInactiveProducts = async () => {
+    const inactiveItems = menuItems.filter(item => item.available === false)
+    
+    if (inactiveItems.length === 0) {
+      showError('Silinecek pasif ürün bulunamadı!')
+      return
+    }
+    
+    const confirmMessage = `${inactiveItems.length} adet pasif ürün silinecek:\n\n${inactiveItems.map(item => `• ${item.name}`).join('\n')}\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?`
+    
+    if (!confirm(confirmMessage)) return
+    
+    try {
+      let deletedCount = 0
+      const headers = await addCSRFToken()
+      
+      for (const item of inactiveItems) {
+        const response = await fetch(`${API_BASE_URL}/menu/${item._id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: headers
+        })
+        
+        if (response.ok) {
+          deletedCount++
+        }
+      }
+      
+      // State'i güncelle
+      setMenuItems(menuItems.filter(item => item.available !== false))
+      showDelete(`${deletedCount} pasif ürün başarıyla silindi!`)
+      
+    } catch (err) {
+      showError('Toplu silme işleminde hata oluştu!')
     }
   }
 
@@ -307,12 +395,53 @@ function AdminDashboard() {
 
   const calculateStats = () => {
     const totalItems = menuItems.length
-    const availableItems = menuItems.filter(item => item.available).length
+    const availableItems = menuItems.filter(item => item.available !== false).length
+    const unavailableItems = menuItems.filter(item => item.available === false).length
     const totalValue = menuItems.reduce((sum, item) => sum + item.price, 0)
     const avgPrice = totalItems > 0 ? (totalValue / totalItems) : 0
     const popularItems = menuItems.filter(item => item.popular).length
 
-    return { totalItems, availableItems, totalValue, avgPrice, popularItems }
+    // Debug: Ürün sayılarını konsola yazdır
+    console.log('🔍 ÜRÜN SAYISI DEBUG:')
+    console.log('📊 Toplam ürün:', totalItems)
+    console.log('✅ Aktif ürün:', availableItems)
+    console.log('❌ Pasif ürün:', unavailableItems)
+    console.log('⭐ Popüler ürün:', popularItems)
+    console.log('💰 Toplam değer:', totalValue.toFixed(2) + '₺')
+    console.log('📈 Ortalama fiyat:', avgPrice.toFixed(2) + '₺')
+    
+    // Ürünlerin detaylarını listele
+    console.log('📝 ÜRÜN LİSTESİ:')
+    menuItems.forEach((item, index) => {
+      console.log(`${index + 1}. ${item.name} - ${item.price}₺ - ${item.available !== false ? '✅ Aktif' : '❌ Pasif'} - ${item.popular ? '⭐ Popüler' : '🔶 Normal'} (ID: ${item._id})`)
+    })
+    
+    // Gereksiz ürünleri tespit et
+    const fakeProducts = menuItems.filter(item => 
+      item.name === 'asd' || (item.name === 'Çay' && item.price === 45)
+    )
+    
+    if (fakeProducts.length > 0) {
+      console.log('🚨 GEREKSİZ ÜRÜNLER TESPİT EDİLDİ:')
+      fakeProducts.forEach(item => {
+        console.log(`- ${item.name} (ID: ${item._id}) - Fiyat: ${item.price}₺`)
+      })
+      console.log('💡 Silmek için: deleteProductsByNames(["asd", "Çay"]) çalıştır')
+      
+      // Global'e ekle ki console'dan çağırabilelim
+      window.deleteProductsByNames = deleteProductsByNames
+    }
+    
+    // Pasif ürünleri ayrı listele
+    const inactiveItems = menuItems.filter(item => item.available === false)
+    if (inactiveItems.length > 0) {
+      console.log('🗑️ PASİF ÜRÜNLER (SİLİNEBİLİR):')
+      inactiveItems.forEach(item => {
+        console.log(`- ${item.name} (ID: ${item._id})`)
+      })
+    }
+
+    return { totalItems, availableItems, unavailableItems, totalValue, avgPrice, popularItems }
   }
 
   const stats = calculateStats()
@@ -423,17 +552,36 @@ function AdminDashboard() {
           <div className="stat-item">
             <Package size={16} />
             <span className="stat-value">{stats.totalItems}</span>
-            <span className="stat-name">Ürün</span>
-          </div>
-          <div className="stat-item">
-            <DollarSign size={16} />
-            <span className="stat-value">{stats.totalValue.toFixed(0)}₺</span>
             <span className="stat-name">Toplam</span>
           </div>
-          <div className="stat-item">
-            <TrendingUp size={16} />
-            <span className="stat-value">{stats.avgPrice.toFixed(0)}₺</span>
-            <span className="stat-name">Ort.</span>
+          <div className="stat-item" style={{ color: stats.availableItems > 0 ? '#10B981' : '#6B7280' }}>
+            <Eye size={16} />
+            <span className="stat-value">{stats.availableItems}</span>
+            <span className="stat-name">Aktif</span>
+          </div>
+          <div className="stat-item" style={{ color: stats.unavailableItems > 0 ? '#F59E0B' : '#6B7280' }}>
+            <EyeOff size={16} />
+            <span className="stat-value">{stats.unavailableItems}</span>
+            <span className="stat-name">Pasif</span>
+            {stats.unavailableItems > 0 && (
+              <button
+                onClick={deleteInactiveProducts}
+                className="clean-btn"
+                title="Pasif ürünleri sil"
+                style={{
+                  marginLeft: '8px',
+                  background: '#EF4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  fontSize: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                🗑️
+              </button>
+            )}
           </div>
           <div className="stat-item">
             <Star size={16} />
@@ -466,35 +614,40 @@ function AdminDashboard() {
               
               <div className="form-grid">
                 <div className="form-group">
-                  <label>Kategori ID *</label>
+                  <label>Kategori ID * <span style={{color: '#6B7280', fontSize: '12px'}}>(2-30 karakter, küçük harf)</span></label>
                   <input
                     type="text"
                     value={categoryForm.id}
-                    onChange={(e) => setCategoryForm({...categoryForm, id: e.target.value})}
-                    placeholder="Örn: beverages"
+                    onChange={(e) => setCategoryForm({...categoryForm, id: e.target.value.toLowerCase()})}
+                    placeholder="Örn: sicakiceckler, tatlilar, anayelemek"
                     required
+                    maxLength={30}
+                    pattern="[a-z0-9-]+"
+                    title="Sadece küçük harf, rakam ve tire kullanın"
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label>Kategori Adı *</label>
+                  <label>Kategori Adı * <span style={{color: '#6B7280', fontSize: '12px'}}>(2-50 karakter, Türkçe destekli)</span></label>
                   <input
                     type="text"
                     value={categoryForm.name}
                     onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
-                    placeholder="Örn: İçecekler"
+                    placeholder="Örn: Sıcak İçecekler, Tatlılar, Ana Yemekler"
                     required
+                    maxLength={50}
                   />
                 </div>
               </div>
               
               <div className="form-group">
-                <label>Açıklama</label>
+                <label>Açıklama <span style={{color: '#6B7280', fontSize: '12px'}}>(maksimum 200 karakter, opsiyonel)</span></label>
                 <textarea
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
-                  placeholder="Kategori açıklaması..."
+                  placeholder="Bu kategorideki ürünler hakkında kısa açıklama yazabilirsiniz..."
                   rows="3"
+                  maxLength={200}
                 />
               </div>
               

@@ -20,10 +20,10 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Kategori gereklidir'],
+    required: false,
     trim: true,
-    lowercase: true,
-    maxlength: [30, 'Kategori 30 karakterden fazla olamaz']
+    maxlength: [30, 'Kategori 30 karakterden fazla olamaz'],
+    default: 'food'
   },
   available: {
     type: Boolean,

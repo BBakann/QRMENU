@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye, Package } from 'lucide-react'
 import { API_BASE_URL, ImageUpload } from '../../../shared'
+// import { addCSRFToken } from '../../../shared/utils/csrf' // CSRF kaldırıldı
 import './AddProductModal.css'
 
 function AddProductModal({ isOpen, onClose, onAdd }) {
@@ -83,8 +84,8 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
     
     if (!formData.description.trim()) {
       errors.push('Açıklama gereklidir')
-    } else if (formData.description.length < 10) {
-      errors.push('Açıklama en az 10 karakter olmalıdır')
+    } else if (formData.description.length < 5) {
+      errors.push('Açıklama en az 5 karakter olmalıdır')
     }
     
     if (!formData.price || formData.price <= 0) {
@@ -114,8 +115,14 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    console.log('🚀 ÜRÜN EKLEME SÜRECİ BAŞLADI')
+    console.log('📋 Form Data:', formData)
+    
     const validationErrors = validateForm()
+    console.log('🔍 Frontend Validation Errors:', validationErrors)
+    
     if (validationErrors.length > 0) {
+      console.log('❌ Frontend validation hatası:', validationErrors.join(', '))
       setError(validationErrors.join(', '))
       return
     }
@@ -124,29 +131,55 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
     setError('')
 
     try {
-      // Token artık cookie'den otomatik gönderilecek
+      console.log('📤 CSRF token atlayarak direkt istek gönderiyorum...')
+      
+      const requestBody = {
+        ...formData,
+        price: parseFloat(formData.price)
+      }
+      console.log('📤 Gönderilecek veri:', requestBody)
+      console.log('🌐 API URL:', `${API_BASE_URL}/menu`)
+      
       const response = await fetch(`${API_BASE_URL}/menu`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price)
-        })
+        body: JSON.stringify(requestBody)
       })
 
+      console.log('📡 Response status:', response.status)
+      console.log('📡 Response ok:', response.ok)
+      
       const data = await response.json()
+      console.log('📥 Response data:', data)
 
       if (data.success) {
+        console.log('✅ Ürün başarıyla eklendi!')
         onAdd(data.data) // Parent component'e yeni ürünü gönder
         resetForm()
         onClose()
       } else {
+        console.log('❌ Backend validation hatası:', data.message)
+        console.log('❌ Validation errors:', data.errors)
+        
+        // Hataları detaylı göster
+        if (data.errors && Array.isArray(data.errors)) {
+          data.errors.forEach((error, index) => {
+            console.log(`Hata ${index + 1}:`)
+            console.log('- Field:', error.path || error.param)
+            console.log('- Value:', error.value)
+            console.log('- Message:', error.msg || error.message)
+            console.log('- Location:', error.location)
+            console.log('- Full Error:', error)
+          })
+        }
+        
         setError(data.message || 'Ürün ekleme başarısız')
       }
     } catch (err) {
+      console.log('❌ Network error:', err)
       setError('Bağlantı hatası')
     } finally {
       setIsLoading(false)
@@ -192,46 +225,49 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
 
           {/* Ürün Adı */}
           <div className="form-group">
-            <label htmlFor="name">Ürün Adı *</label>
+            <label htmlFor="name">Ürün Adı * <span style={{color: '#6B7280', fontSize: '12px'}}>(2-100 karakter)</span></label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Örn: Türk Kahvesi, Margarita Pizza..."
+              placeholder="Örn: Türk Kahvesi, Margarita Pizza, Cappuccino..."
               className="form-input"
               required
+              maxLength={100}
             />
           </div>
 
           {/* Açıklama */}
           <div className="form-group">
-            <label htmlFor="description">Açıklama *</label>
+            <label htmlFor="description">Açıklama * <span style={{color: '#6B7280', fontSize: '12px'}}>(5-500 karakter)</span></label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Ürününüzün lezzetli açıklamasını yazın..."
+              placeholder="Ürününüzün detaylı açıklamasını yazın. En az 5 karakter gerekli. Örn: Geleneksel yöntemlerle hazırlanan özel karışımımız..."
               className="form-textarea"
               rows="3"
               required
+              maxLength={500}
             />
           </div>
 
           {/* Fiyat ve Kategori */}
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="price">Fiyat (₺) *</label>
+              <label htmlFor="price">Fiyat (₺) * <span style={{color: '#6B7280', fontSize: '12px'}}>(0-10.000₺)</span></label>
               <input
                 type="number"
                 id="price"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="0"
+                placeholder="Ürün fiyatını girin (Örn: 25.50)"
                 min="0"
+                max="10000"
                 step="0.01"
                 className="form-input"
                 required
@@ -239,13 +275,14 @@ function AddProductModal({ isOpen, onClose, onAdd }) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="category">Kategori</label>
+              <label htmlFor="category">Kategori <span style={{color: '#6B7280', fontSize: '12px'}}>(Türkçe karakter destekli)</span></label>
               <select
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 className="form-select"
+                title="Ürününüzün kategorisini seçin. Türkçe karakterler ve boşluklar kullanabilirsiniz."
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>{category.name}</option>

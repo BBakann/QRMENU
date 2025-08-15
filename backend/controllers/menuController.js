@@ -72,17 +72,30 @@ export const getProductsByCategory = async (req, res) => {
 // Yeni ürün ekle (ADMIN)
 export const createProduct = async (req, res) => {
     try {
+        console.log('🚀 BACKEND: createProduct çağrıldı');
+        console.log('📥 Request Body:', req.body);
+        console.log('👤 User:', req.user);
+        
         const { name, description, price, category, popular, image } = req.body;
+        
+        console.log('🔍 Parsed values:');
+        console.log('- name:', name);
+        console.log('- description:', description);
+        console.log('- price:', price);
+        console.log('- category:', category);
+        console.log('- popular:', popular);
+        console.log('- image:', image);
         
         // Validation
         if (!name || !description || !price) {
+            console.log('❌ BACKEND: Basic validation failed');
             return res.status(400).json({
                 success: false,
                 message: 'İsim, açıklama ve fiyat gereklidir!'
             });
         }
         
-        const newProduct = new Product({
+        const productData = {
             name,
             description,
             price: parseFloat(price),
@@ -91,9 +104,15 @@ export const createProduct = async (req, res) => {
             image: image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=400&fit=crop',
             createdBy: req.user.username,
             updatedBy: req.user.username
-        });
+        };
+        
+        console.log('📋 Final product data:', productData);
+        
+        const newProduct = new Product(productData);
+        console.log('🏗️ Product model created, attempting save...');
 
         const savedProduct = await newProduct.save();
+        console.log('💾 Product saved successfully:', savedProduct._id);
         
         console.log(`✅ Admin ${req.user.username} yeni ürün ekledi: ${name}`);
         
@@ -103,10 +122,24 @@ export const createProduct = async (req, res) => {
             data: savedProduct
         });
     } catch (error) {
-        console.error('Product creation error:', error);
+        console.error('❌ BACKEND: Product creation error:', error);
+        console.error('❌ Error name:', error.name);
+        console.error('❌ Error message:', error.message);
+        
+        // Mongoose validation errors
+        if (error.name === 'ValidationError') {
+            console.error('❌ Mongoose validation errors:', error.errors);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation hatası',
+                errors: Object.values(error.errors).map(err => err.message)
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: 'Ürün eklenirken hata oluştu'
+            message: 'Ürün eklenirken hata oluştu',
+            error: error.message
         });
     }
 };

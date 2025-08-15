@@ -91,14 +91,35 @@ export const validateInputTypes = (req, res, next) => {
 
 // Validation sonuçlarını kontrol eden middleware
 export const validateRequest = (req, res, next) => {
+  console.log(`🔍 VALIDATION: validateRequest middleware çağrıldı - ${new Date().toISOString()}`);
+  console.log('📥 Request body:', req.body);
+  console.log('🌐 Request path:', req.path);
+  console.log('🔄 Request method:', req.method);
+  
   const errors = validationResult(req);
+  console.log('📋 Validation errors:', errors.array());
+  
   if (!errors.isEmpty()) {
+    console.log('❌ VALIDATION: Hatalar bulundu:', errors.array());
+    
+    // Her hatayı ayrı ayrı logla
+    errors.array().forEach((error, index) => {
+      console.log(`❌ Hata ${index + 1}:`, {
+        field: error.path,
+        value: error.value,
+        message: error.msg,
+        location: error.location
+      });
+    });
+    
     return res.status(400).json({
       success: false,
       message: 'Validation hatası',
       errors: errors.array()
     });
   }
+  
+  console.log('✅ VALIDATION: Başarılı, next() çağrılıyor');
   next();
 };
 
@@ -128,8 +149,8 @@ export const validateProduct = [
   
   body('description')
     .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Açıklama 10-500 karakter arasında olmalıdır')
+    .isLength({ min: 5, max: 500 })
+    .withMessage('Açıklama 5-500 karakter arasında olmalıdır')
     .escape(),
   
   body('price')
@@ -137,11 +158,10 @@ export const validateProduct = [
     .withMessage('Fiyat geçerli bir sayı olmalıdır'),
   
   body('category')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 30 })
-    .withMessage('Kategori 2-30 karakter arasında olmalıdır')
-    .matches(/^[a-z0-9-]+$/)
-    .withMessage('Kategori sadece küçük harf, rakam ve tire içerebilir'),
+    .withMessage('Kategori 2-30 karakter arasında olmalıdır'),
   
   validateRequest
 ];

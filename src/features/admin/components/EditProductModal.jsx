@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader, Star, Eye } from 'lucide-react'
 import { API_BASE_URL, ImageUpload } from '../../../shared'
+// import { addCSRFToken } from '../../../shared/utils/csrf' // CSRF kaldırıldı
 import './EditProductModal.css'
 
 function EditProductModal({ product, isOpen, onClose, onUpdate }) {
@@ -82,7 +83,6 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
     setError('')
 
     try {
-      // Token artık cookie'den otomatik gönderilecek
       const response = await fetch(`${API_BASE_URL}/menu/${product._id}`, {
         method: 'PUT',
         credentials: 'include',
@@ -141,46 +141,49 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
 
           {/* Ürün Adı */}
           <div className="form-group">
-            <label htmlFor="name">Ürün Adı *</label>
+            <label htmlFor="name">Ürün Adı * <span style={{color: '#6B7280', fontSize: '12px'}}>(2-100 karakter)</span></label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Ürün adını girin"
+              placeholder="Örn: Türk Kahvesi, Margarita Pizza, Cappuccino..."
               className="form-input"
               required
+              maxLength={100}
             />
           </div>
 
           {/* Açıklama */}
           <div className="form-group">
-            <label htmlFor="description">Açıklama *</label>
+            <label htmlFor="description">Açıklama * <span style={{color: '#6B7280', fontSize: '12px'}}>(5-500 karakter)</span></label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Ürün açıklamasını girin"
+              placeholder="Ürününüzün detaylı açıklamasını yazın. En az 5 karakter gerekli..."
               className="form-textarea"
               rows="3"
               required
+              maxLength={500}
             />
           </div>
 
           {/* Fiyat ve Kategori */}
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="price">Fiyat (₺) *</label>
+              <label htmlFor="price">Fiyat (₺) * <span style={{color: '#6B7280', fontSize: '12px'}}>(0-10.000₺)</span></label>
               <input
                 type="number"
                 id="price"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="0"
+                placeholder="Ürün fiyatını girin (Örn: 25.50)"
                 min="0"
+                max="10000"
                 step="0.01"
                 className="form-input"
                 required
@@ -188,13 +191,14 @@ function EditProductModal({ product, isOpen, onClose, onUpdate }) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="category">Kategori</label>
+              <label htmlFor="category">Kategori <span style={{color: '#6B7280', fontSize: '12px'}}>(Türkçe karakter destekli)</span></label>
               <select
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 className="form-select"
+                title="Ürününüzün kategorisini seçin. Türkçe karakterler ve boşluklar kullanabilirsiniz."
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>{category.name}</option>
