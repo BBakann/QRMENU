@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "framer-motion": "^12.23.12",
-    "lucide-react": "^0.536.0",
+    "lucide-react": "^0.541.0",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
